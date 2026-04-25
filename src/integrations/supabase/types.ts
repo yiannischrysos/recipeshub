@@ -16,8 +16,13 @@ export type Database = {
     Tables: {
       ingredients: {
         Row: {
+          allergens: string[]
+          brand: string | null
+          category: string | null
           cost_per_unit: number
           created_at: string
+          description: string | null
+          dietary: string[]
           id: string
           name: string
           notes: string | null
@@ -27,8 +32,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          allergens?: string[]
+          brand?: string | null
+          category?: string | null
           cost_per_unit?: number
           created_at?: string
+          description?: string | null
+          dietary?: string[]
           id?: string
           name: string
           notes?: string | null
@@ -38,8 +48,13 @@ export type Database = {
           user_id: string
         }
         Update: {
+          allergens?: string[]
+          brand?: string | null
+          category?: string | null
           cost_per_unit?: number
           created_at?: string
+          description?: string | null
+          dietary?: string[]
           id?: string
           name?: string
           notes?: string | null
@@ -82,25 +97,31 @@ export type Database = {
           created_at: string
           id: string
           ingredient_id: string
+          ingredient_note: string | null
           position: number
           quantity: number
           recipe_id: string
+          unit_override: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           ingredient_id: string
+          ingredient_note?: string | null
           position?: number
           quantity?: number
           recipe_id: string
+          unit_override?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           ingredient_id?: string
+          ingredient_note?: string | null
           position?: number
           quantity?: number
           recipe_id?: string
+          unit_override?: string | null
         }
         Relationships: [
           {
@@ -119,14 +140,64 @@ export type Database = {
           },
         ]
       }
+      recipe_steps: {
+        Row: {
+          created_at: string
+          degrees: string | null
+          description: string
+          estimated_time: number | null
+          fan_power: string | null
+          id: string
+          recipe_id: string
+          step_number: number
+          time_unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          degrees?: string | null
+          description: string
+          estimated_time?: number | null
+          fan_power?: string | null
+          id?: string
+          recipe_id: string
+          step_number?: number
+          time_unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          degrees?: string | null
+          description?: string
+          estimated_time?: number | null
+          fan_power?: string | null
+          id?: string
+          recipe_id?: string
+          step_number?: number
+          time_unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_steps_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipes: {
         Row: {
           category: string | null
           created_at: string
           description: string | null
+          dietary: string[]
+          family: string | null
           id: string
           margin_pct: number
           name: string
+          parent_id: string | null
+          recipe_order: number | null
+          source: string | null
+          source_url: string | null
           updated_at: string
           user_id: string
           yield_portions: number
@@ -135,9 +206,15 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          dietary?: string[]
+          family?: string | null
           id?: string
           margin_pct?: number
           name: string
+          parent_id?: string | null
+          recipe_order?: number | null
+          source?: string | null
+          source_url?: string | null
           updated_at?: string
           user_id: string
           yield_portions?: number
@@ -146,14 +223,28 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          dietary?: string[]
+          family?: string | null
           id?: string
           margin_pct?: number
           name?: string
+          parent_id?: string | null
+          recipe_order?: number | null
+          source?: string | null
+          source_url?: string | null
           updated_at?: string
           user_id?: string
           yield_portions?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recipes_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
