@@ -45,6 +45,20 @@ function RecipesIndex() {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [busy, setBusy] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<RecipeRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const removeRecipe = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from("recipes").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Deleted "${deleteTarget.name}"`);
+    setDeleteTarget(null);
+    load();
+  };
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [loading, user, nav]);
 
