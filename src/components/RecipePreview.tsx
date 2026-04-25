@@ -142,12 +142,9 @@ export function RecipePreview({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0"
-        showCloseButton={false}
-      >
-        {/* Sticky header with nav */}
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-card/95 backdrop-blur border-b border-border px-4 py-3">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+        {/* Sticky header with sibling nav */}
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-card/95 backdrop-blur border-b border-border px-4 py-3 pr-12">
           <Button
             variant="ghost"
             size="sm"
@@ -174,9 +171,6 @@ export function RecipePreview({
               {next?.name ?? "Next"}
             </span>
             <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
-            <X className="h-4 w-4" />
           </Button>
         </div>
 
