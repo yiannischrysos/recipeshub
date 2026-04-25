@@ -118,9 +118,8 @@ function RecipeDetail() {
   const updateRecipe = (patch: Partial<Recipe>) => setRecipe((r) => (r ? { ...r, ...patch } : r));
 
   const addLine = () => {
-    if (ingredients.length === 0) return toast.error("Add ingredients first.");
     setLines((ls) => [...ls, {
-      ingredient_id: ingredients[0].id, quantity: 0,
+      ingredient_id: ingredients[0]?.id ?? "", quantity: 0,
       unit_override: null, ingredient_note: null, position: ls.length,
     }]);
   };
