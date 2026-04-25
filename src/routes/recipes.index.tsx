@@ -172,7 +172,7 @@ function RecipesIndex() {
           {items.length === 0 && <p className="text-muted-foreground mt-1">Create your first recipe to start costing.</p>}
         </div>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 overflow-hidden rounded-2xl border border-border bg-card divide-y divide-border">
           {families.map(({ head, subs }) => {
             const allLines = [head, ...subs].flatMap((r) => r.recipe_ingredients);
             const tc = allLines.reduce((s, line) => s + Number(line.quantity) * Number(line.ingredients?.cost_per_unit ?? 0), 0);
@@ -181,61 +181,89 @@ function RecipesIndex() {
             const margin = Number(head.margin_pct) || 0;
             const price = margin >= 100 ? per : per / (1 - margin / 100);
             return (
-              <div key={head.id} className="group relative rounded-2xl border border-border bg-card p-5 hover:shadow-md transition-shadow flex flex-col">
-                {/* Hover actions */}
-                <div className="absolute right-3 top-3 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="h-8 w-8"
-                    title="Preview"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewId(head.id); }}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="h-8 w-8"
-                    title="Edit"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); nav({ to: "/recipes/$id", params: { id: head.id } }); }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground"
-                    title="Delete"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteTarget(head); }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+              <div key={head.id} className="group relative hover:bg-secondary/40 transition-colors">
+                <Link
+                  to="/recipes/$id"
+                  params={{ id: head.id }}
+                  className="flex items-center gap-4 px-4 py-3 sm:px-5 sm:py-4"
+                >
+                  {/* Title block */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-display text-lg sm:text-xl leading-tight truncate">
+                        {head.family ?? head.name}
+                      </span>
+                      {head.category && (
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground bg-secondary/70 rounded-full px-2 py-0.5">
+                          {head.category}
+                        </span>
+                      )}
+                      {subs.length > 0 && (
+                        <span className="text-[10px] text-muted-foreground">+{subs.length} variant{subs.length > 1 ? "s" : ""}</span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                      <span>{portions} portion{portions === 1 ? "" : "s"}</span>
+                      <span>·</span>
+                      <span>{fmtMoney(per)} / portion</span>
+                      {head.dietary.length > 0 && (
+                        <span className="hidden sm:inline-flex"><DietaryChips items={head.dietary} /></span>
+                      )}
+                    </div>
+                  </div>
 
-                {head.category && <div className="text-xs uppercase tracking-widest text-muted-foreground pr-28">{head.category}</div>}
-                <Link to="/recipes/$id" params={{ id: head.id }} className="font-display text-2xl hover:text-primary leading-tight pr-28">
-                  {head.family ?? head.name}
+                  {/* Price */}
+                  <div className="hidden sm:flex flex-col items-end shrink-0 pr-2">
+                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Suggested</div>
+                    <div className="font-display text-lg text-primary">{fmtMoney(price)}</div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      title="Preview"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewId(head.id); }}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      title="Edit"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); nav({ to: "/recipes/$id", params: { id: head.id } }); }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground"
+                      title="Delete"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteTarget(head); }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </Link>
-                <div className="mt-2"><DietaryChips items={head.dietary} /></div>
 
                 {subs.length > 0 && (
-                  <div className="mt-3 space-y-1">
+                  <div className="px-5 pb-3 pl-6 flex flex-wrap gap-x-4 gap-y-1">
                     {subs.map((s) => (
-                      <Link key={s.id} to="/recipes/$id" params={{ id: s.id }}
-                        className="block text-sm text-muted-foreground hover:text-primary">
+                      <Link
+                        key={s.id}
+                        to="/recipes/$id"
+                        params={{ id: s.id }}
+                        className="text-xs text-muted-foreground hover:text-primary"
+                      >
                         ↳ {s.name.replace(head.family ?? head.name, "").trim() || s.name}
                       </Link>
                     ))}
                   </div>
                 )}
-
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  <Stat label="Total cost" value={fmtMoney(tc)} />
-                  <Stat label="Per portion" value={fmtMoney(per)} />
-                  <Stat label="Portions" value={String(portions)} />
-                  <Stat label="Suggested" value={fmtMoney(price)} accent />
-                </div>
               </div>
             );
           })}
@@ -272,11 +300,3 @@ function RecipesIndex() {
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className={`rounded-lg p-2.5 ${accent ? "bg-primary/10" : "bg-secondary/60"}`}>
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`mt-0.5 font-display text-base ${accent ? "text-primary" : ""}`}>{value}</div>
-    </div>
-  );
-}
