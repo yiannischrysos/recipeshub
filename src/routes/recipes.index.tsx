@@ -8,10 +8,15 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, ChefHat, Search } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, ChefHat, Search, Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { DietaryChips } from "@/components/Chips";
+import { RecipePreview } from "@/components/RecipePreview";
 
 export const Route = createFileRoute("/recipes/")({
   component: RecipesIndex,
@@ -40,6 +45,20 @@ function RecipesIndex() {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [busy, setBusy] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<RecipeRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const removeRecipe = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from("recipes").delete().eq("id", deleteTarget.id);
+    setDeleting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`Deleted "${deleteTarget.name}"`);
+    setDeleteTarget(null);
+    load();
+  };
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [loading, user, nav]);
 
@@ -162,9 +181,40 @@ function RecipesIndex() {
             const margin = Number(head.margin_pct) || 0;
             const price = margin >= 100 ? per : per / (1 - margin / 100);
             return (
-              <div key={head.id} className="rounded-2xl border border-border bg-card p-5 hover:shadow-md transition-shadow flex flex-col">
-                {head.category && <div className="text-xs uppercase tracking-widest text-muted-foreground">{head.category}</div>}
-                <Link to="/recipes/$id" params={{ id: head.id }} className="font-display text-2xl hover:text-primary leading-tight">
+              <div key={head.id} className="group relative rounded-2xl border border-border bg-card p-5 hover:shadow-md transition-shadow flex flex-col">
+                {/* Hover actions */}
+                <div className="absolute right-3 top-3 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-8 w-8"
+                    title="Preview"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewId(head.id); }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-8 w-8"
+                    title="Edit"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); nav({ to: "/recipes/$id", params: { id: head.id } }); }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-8 w-8 hover:bg-destructive hover:text-destructive-foreground"
+                    title="Delete"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteTarget(head); }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {head.category && <div className="text-xs uppercase tracking-widest text-muted-foreground pr-28">{head.category}</div>}
+                <Link to="/recipes/$id" params={{ id: head.id }} className="font-display text-2xl hover:text-primary leading-tight pr-28">
                   {head.family ?? head.name}
                 </Link>
                 <div className="mt-2"><DietaryChips items={head.dietary} /></div>
@@ -191,6 +241,33 @@ function RecipesIndex() {
           })}
         </div>
       )}
+
+      <RecipePreview
+        open={previewId !== null}
+        onOpenChange={(o) => { if (!o) setPreviewId(null); }}
+        recipeId={previewId ?? ""}
+      />
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deleteTarget?.family ?? deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the recipe along with its ingredients and method steps. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); removeRecipe(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
