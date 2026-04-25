@@ -1,8 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { fmtMoney } from "@/lib/format";
 import { AllergenChips, DietaryChips } from "@/components/Chips";
 
@@ -56,8 +66,19 @@ export function RecipePreview({
   const [ingMap, setIngMap] = useState<Record<string, Ingredient>>({});
   const [loading, setLoading] = useState(true);
 
+  // Order prompt state
+  const [orderPrompt, setOrderPrompt] = useState<{
+    firstId: string;
+    firstName: string;
+  } | null>(null);
+  const [promptedFor, setPromptedFor] = useState<string | null>(null);
+
   useEffect(() => {
-    if (open) setCurrentId(recipeId);
+    if (open) {
+      setCurrentId(recipeId);
+      setPromptedFor(null);
+      setOrderPrompt(null);
+    }
   }, [open, recipeId]);
 
   useEffect(() => {
@@ -77,12 +98,24 @@ export function RecipePreview({
       const groupParent = r.parent_id ?? r.id;
       const { data: sibs } = await supabase
         .from("recipes")
-        .select("id,name")
+        .select("id,name,recipe_order")
         .or(`id.eq.${groupParent},parent_id.eq.${groupParent}`)
         .order("recipe_order", { ascending: true, nullsFirst: false })
         .order("name");
       if (cancelled) return;
-      setSiblings(sibs ?? []);
+      const sibList = (sibs ?? []).map((s) => ({ id: s.id, name: s.name }));
+      setSiblings(sibList);
+
+      // If this recipe belongs to a family with a defined order and the user
+      // didn't open the first item, ask if they'd like to start from the top.
+      if (
+        sibList.length > 1 &&
+        promptedFor !== (r.parent_id ?? r.id) &&
+        sibList[0].id !== currentId
+      ) {
+        setOrderPrompt({ firstId: sibList[0].id, firstName: sibList[0].name });
+        setPromptedFor(r.parent_id ?? r.id);
+      }
 
       const [{ data: ri }, { data: st }] = await Promise.all([
         supabase
@@ -116,6 +149,7 @@ export function RecipePreview({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentId]);
 
   const totals = useMemo(() => {
@@ -141,121 +175,182 @@ export function RecipePreview({
   const next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0 gap-0">
-        {/* Sticky header with sibling nav */}
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-card/95 backdrop-blur border-b border-border px-4 py-3 pr-12">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => prev && setCurrentId(prev.id)}
-            disabled={!prev}
-            className="shrink-0"
+    <>
+      <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogPrimitive.Content
+            aria-describedby={undefined}
+            className="fixed inset-0 z-50 flex flex-col bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
           >
-            <ChevronLeft className="h-4 w-4" />
-            <span className="hidden sm:inline ml-1 truncate max-w-[120px]">
-              {prev?.name ?? "Previous"}
-            </span>
-          </Button>
-          <div className="text-xs text-muted-foreground tabular-nums">
-            {siblings.length > 1 ? `${idx + 1} / ${siblings.length}` : ""}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => next && setCurrentId(next.id)}
-            disabled={!next}
-            className="shrink-0"
-          >
-            <span className="hidden sm:inline mr-1 truncate max-w-[120px]">
-              {next?.name ?? "Next"}
-            </span>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+            <DialogPrimitive.Title className="sr-only">
+              {recipe?.name ?? "Recipe preview"}
+            </DialogPrimitive.Title>
 
-        {loading || !recipe ? (
-          <div className="p-10 text-center text-muted-foreground">Loading…</div>
-        ) : (
-          <div className="p-6 space-y-6">
-            <header>
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">
-                {[recipe.family, recipe.category].filter(Boolean).join(" · ")}
+            {/* Sticky header with sibling nav + close */}
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-card/95 backdrop-blur border-b border-border px-4 py-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => prev && setCurrentId(prev.id)}
+                disabled={!prev}
+                className="shrink-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline ml-1 truncate max-w-[160px]">
+                  {prev?.name ?? "Previous"}
+                </span>
+              </Button>
+              <div className="text-xs text-muted-foreground tabular-nums">
+                {siblings.length > 1 ? `${idx + 1} / ${siblings.length}` : ""}
               </div>
-              <h1 className="font-display text-3xl mt-1 text-foreground">{recipe.name}</h1>
-              {recipe.description && (
-                <p className="mt-2 text-sm text-muted-foreground italic">{recipe.description}</p>
-              )}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <DietaryChips items={recipe.dietary} />
-                <AllergenChips items={allergens} />
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => next && setCurrentId(next.id)}
+                  disabled={!next}
+                >
+                  <span className="hidden sm:inline mr-1 truncate max-w-[160px]">
+                    {next?.name ?? "Next"}
+                  </span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <DialogPrimitive.Close asChild>
+                  <Button variant="ghost" size="icon" aria-label="Close preview" className="h-9 w-9">
+                    <X className="h-5 w-5" />
+                  </Button>
+                </DialogPrimitive.Close>
               </div>
-            </header>
-
-            <div className="grid grid-cols-3 gap-3 rounded-xl bg-secondary/50 p-4">
-              <Stat label={`Yield`} value={`${recipe.yield_portions} pp`} />
-              <Stat label="Per portion" value={fmtMoney(totals.perPortion)} />
-              <Stat label="Suggested" value={fmtMoney(totals.suggested)} highlight />
             </div>
 
-            <section>
-              <h2 className="font-display text-xl mb-3">Ingredients</h2>
-              {lines.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No ingredients.</p>
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto">
+              {loading || !recipe ? (
+                <div className="p-10 text-center text-muted-foreground">Loading…</div>
               ) : (
-                <ul className="divide-y divide-border/60">
-                  {lines.map((l, i) => {
-                    const ing = ingMap[l.ingredient_id];
-                    return (
-                      <li key={i} className="flex items-baseline justify-between py-2 gap-3">
-                        <span className="font-medium text-foreground tabular-nums shrink-0 w-24">
-                          {l.quantity} {l.unit_override ?? ing?.unit ?? ""}
-                        </span>
-                        <span className="flex-1 text-sm text-foreground">
-                          {ing?.name ?? "—"}
-                          {l.ingredient_note && (
-                            <span className="text-muted-foreground ml-1">({l.ingredient_note})</span>
-                          )}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
+                <div className="mx-auto max-w-3xl p-6 space-y-6">
+                  <header>
+                    <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                      {[recipe.family, recipe.category].filter(Boolean).join(" · ")}
+                    </div>
+                    <h1 className="font-display text-3xl mt-1 text-foreground">{recipe.name}</h1>
+                    {recipe.description && (
+                      <p className="mt-2 text-sm text-muted-foreground italic">
+                        {recipe.description}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <DietaryChips items={recipe.dietary} />
+                      <AllergenChips items={allergens} />
+                    </div>
+                  </header>
 
-            <section>
-              <h2 className="font-display text-xl mb-3">Method</h2>
-              {steps.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No method steps.</p>
-              ) : (
-                <ol className="space-y-3">
-                  {steps.map((s, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span className="font-display text-primary text-lg shrink-0 w-7 text-right">
-                        {i + 1}.
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-sm text-foreground leading-relaxed">{s.description}</p>
-                        {(s.estimated_time || s.degrees) && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {s.estimated_time && s.time_unit
-                              ? `${s.estimated_time} ${s.time_unit}`
-                              : ""}
-                            {s.estimated_time && s.degrees ? "  ·  " : ""}
-                            {s.degrees ?? ""}
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
+                  <div className="grid grid-cols-3 gap-3 rounded-xl bg-secondary/50 p-4">
+                    <Stat label="Yield" value={`${recipe.yield_portions} pp`} />
+                    <Stat label="Per portion" value={fmtMoney(totals.perPortion)} />
+                    <Stat label="Suggested" value={fmtMoney(totals.suggested)} highlight />
+                  </div>
+
+                  <section>
+                    <h2 className="font-display text-xl mb-3">Ingredients</h2>
+                    {lines.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No ingredients.</p>
+                    ) : (
+                      <ul className="divide-y divide-border/60">
+                        {lines.map((l, i) => {
+                          const ing = ingMap[l.ingredient_id];
+                          return (
+                            <li
+                              key={i}
+                              className="flex items-baseline justify-between py-2 gap-3"
+                            >
+                              <span className="font-medium text-foreground tabular-nums shrink-0 w-24">
+                                {l.quantity} {l.unit_override ?? ing?.unit ?? ""}
+                              </span>
+                              <span className="flex-1 text-sm text-foreground">
+                                {ing?.name ?? "—"}
+                                {l.ingredient_note && (
+                                  <span className="text-muted-foreground ml-1">
+                                    ({l.ingredient_note})
+                                  </span>
+                                )}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </section>
+
+                  <section>
+                    <h2 className="font-display text-xl mb-3">Method</h2>
+                    {steps.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No method steps.</p>
+                    ) : (
+                      <ol className="space-y-3">
+                        {steps.map((s, i) => (
+                          <li key={i} className="flex gap-3">
+                            <span className="font-display text-primary text-lg shrink-0 w-7 text-right">
+                              {i + 1}.
+                            </span>
+                            <div className="flex-1">
+                              <p className="text-sm text-foreground leading-relaxed">
+                                {s.description}
+                              </p>
+                              {(s.estimated_time || s.degrees) && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {s.estimated_time && s.time_unit
+                                    ? `${s.estimated_time} ${s.time_unit}`
+                                    : ""}
+                                  {s.estimated_time && s.degrees ? "  ·  " : ""}
+                                  {s.degrees ?? ""}
+                                </p>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </section>
+                </div>
               )}
-            </section>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
+
+      {/* Recommended order prompt */}
+      <AlertDialog
+        open={orderPrompt !== null}
+        onOpenChange={(o) => {
+          if (!o) setOrderPrompt(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start from the recommended order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This recipe is part of a family. Would you like to start from the first recipe in
+              the recommended order ("{orderPrompt?.firstName}")?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setOrderPrompt(null)}>
+              Stay on this recipe
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (orderPrompt) setCurrentId(orderPrompt.firstId);
+                setOrderPrompt(null);
+              }}
+            >
+              Start from the top
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
