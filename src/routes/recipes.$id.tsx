@@ -16,6 +16,7 @@ import { ALLERGENS, DIETARY, ALLERGEN_EMOJI, DIETARY_EMOJI } from "@/lib/taxonom
 import { AllergenChips, DietaryChips } from "@/components/Chips";
 import { downloadRecipePdf } from "@/lib/recipe-pdf";
 import { RecipePreview } from "@/components/RecipePreview";
+import { IngredientCombobox } from "@/components/IngredientCombobox";
 
 export const Route = createFileRoute("/recipes/$id")({
   component: RecipeDetail,
