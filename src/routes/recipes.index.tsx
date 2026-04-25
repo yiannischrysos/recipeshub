@@ -300,11 +300,3 @@ function RecipesIndex() {
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-  return (
-    <div className={`rounded-lg p-2.5 ${accent ? "bg-primary/10" : "bg-secondary/60"}`}>
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className={`mt-0.5 font-display text-base ${accent ? "text-primary" : ""}`}>{value}</div>
-    </div>
-  );
-}
