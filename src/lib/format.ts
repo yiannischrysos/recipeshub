@@ -1,5 +1,5 @@
-export const fmtMoney = (n: number, currency = "USD") =>
-  new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 2 }).format(
+export const fmtMoney = (n: number, currency = "EUR") =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency, maximumFractionDigits: 2 }).format(
     Number.isFinite(n) ? n : 0,
   );
 

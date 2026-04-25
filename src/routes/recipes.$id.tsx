@@ -9,12 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, ExternalLink, GripVertical, Download } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, ExternalLink, GripVertical, Download, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney, fmtNum } from "@/lib/format";
 import { ALLERGENS, DIETARY, ALLERGEN_EMOJI, DIETARY_EMOJI } from "@/lib/taxonomy";
 import { AllergenChips, DietaryChips } from "@/components/Chips";
 import { downloadRecipePdf } from "@/lib/recipe-pdf";
+import { RecipePreview } from "@/components/RecipePreview";
 
 export const Route = createFileRoute("/recipes/$id")({
   component: RecipeDetail,
@@ -65,6 +66,7 @@ function RecipeDetail() {
   const [steps, setSteps] = useState<Step[]>([]);
   const [busy, setBusy] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [loading, user, nav]);
 
@@ -404,12 +406,16 @@ function RecipeDetail() {
             >
               <Download className="h-4 w-4 mr-1" /> Download PDF
             </Button>
+            <Button variant="outline" className="w-full mt-2" onClick={() => setPreviewOpen(true)}>
+              <Eye className="h-4 w-4 mr-1" /> Preview
+            </Button>
           </div>
           <div className="text-xs text-muted-foreground px-1">
             <DietaryChips items={recipe.dietary} />
           </div>
         </aside>
       </div>
+      <RecipePreview open={previewOpen} onOpenChange={setPreviewOpen} recipeId={recipe.id} />
     </div>
   );
 }
