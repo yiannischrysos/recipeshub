@@ -406,12 +406,16 @@ function RecipeDetail() {
             >
               <Download className="h-4 w-4 mr-1" /> Download PDF
             </Button>
+            <Button variant="outline" className="w-full mt-2" onClick={() => setPreviewOpen(true)}>
+              <Eye className="h-4 w-4 mr-1" /> Preview
+            </Button>
           </div>
           <div className="text-xs text-muted-foreground px-1">
             <DietaryChips items={recipe.dietary} />
           </div>
         </aside>
       </div>
+      <RecipePreview open={previewOpen} onOpenChange={setPreviewOpen} recipeId={recipe.id} />
     </div>
   );
 }
