@@ -9,11 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, ExternalLink, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, ExternalLink, GripVertical, Download } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney, fmtNum } from "@/lib/format";
 import { ALLERGENS, DIETARY, ALLERGEN_EMOJI, DIETARY_EMOJI } from "@/lib/taxonomy";
 import { AllergenChips, DietaryChips } from "@/components/Chips";
+import { downloadRecipePdf } from "@/lib/recipe-pdf";
 
 export const Route = createFileRoute("/recipes/$id")({
   component: RecipeDetail,
