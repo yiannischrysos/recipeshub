@@ -273,12 +273,6 @@ function RecipeDetail() {
                 <Plus className="h-4 w-4 mr-1" /> Add line
               </Button>
             </div>
-            {ingredients.length === 0 && (
-              <p className="mt-4 text-sm text-muted-foreground">
-                No ingredients in your library yet.{" "}
-                <Link to="/ingredients" className="text-primary underline">Add some first.</Link>
-              </p>
-            )}
             {lines.length === 0 ? (
               <p className="mt-6 text-sm text-muted-foreground">No ingredients in this recipe yet.</p>
             ) : (
@@ -289,15 +283,14 @@ function RecipeDetail() {
                   return (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-5">
-                        <Select value={l.ingredient_id}
-                          onValueChange={(v) => setLines((ls) => ls.map((x, i) => (i === idx ? { ...x, ingredient_id: v } : x)))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {ingredients.map((i) => (
-                              <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <IngredientCombobox
+                          ingredients={ingredients}
+                          value={l.ingredient_id}
+                          onChange={(v) =>
+                            setLines((ls) => ls.map((x, i) => (i === idx ? { ...x, ingredient_id: v } : x)))
+                          }
+                          onCreated={(ing) => setIngredients((all) => [...all, ing].sort((a, b) => a.name.localeCompare(b.name)))}
+                        />
                       </div>
                       <div className="col-span-2">
                         <Input value={l.ingredient_note ?? ""} placeholder="[note]"
