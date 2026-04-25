@@ -8,10 +8,15 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, ChefHat, Search } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, ChefHat, Search, Eye, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { DietaryChips } from "@/components/Chips";
+import { RecipePreview } from "@/components/RecipePreview";
 
 export const Route = createFileRoute("/recipes/")({
   component: RecipesIndex,
