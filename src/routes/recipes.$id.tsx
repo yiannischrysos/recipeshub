@@ -9,11 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Save, ExternalLink, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save, ExternalLink, GripVertical, Download } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney, fmtNum } from "@/lib/format";
 import { ALLERGENS, DIETARY, ALLERGEN_EMOJI, DIETARY_EMOJI } from "@/lib/taxonomy";
 import { AllergenChips, DietaryChips } from "@/components/Chips";
+import { downloadRecipePdf } from "@/lib/recipe-pdf";
 
 export const Route = createFileRoute("/recipes/$id")({
   component: RecipeDetail,
@@ -386,6 +387,22 @@ function RecipeDetail() {
             </div>
             <Button className="w-full mt-6" onClick={saveAll} disabled={busy}>
               <Save className="h-4 w-4 mr-1" /> {busy ? "Saving…" : "Save recipe"}
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full mt-2"
+              onClick={() =>
+                downloadRecipePdf({
+                  recipe,
+                  lines,
+                  steps,
+                  ingMap,
+                  totals: { totalCost, perPortion, suggested, profit },
+                  allergens: allergenSet,
+                })
+              }
+            >
+              <Download className="h-4 w-4 mr-1" /> Download PDF
             </Button>
           </div>
           <div className="text-xs text-muted-foreground px-1">
