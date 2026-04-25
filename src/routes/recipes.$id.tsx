@@ -66,6 +66,7 @@ function RecipeDetail() {
   const [steps, setSteps] = useState<Step[]>([]);
   const [busy, setBusy] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [loading, user, nav]);
 
