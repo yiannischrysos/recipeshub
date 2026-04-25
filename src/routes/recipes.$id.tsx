@@ -144,16 +144,20 @@ function RecipeDetail() {
     const { error: dLErr } = await supabase.from("recipe_ingredients").delete().eq("recipe_id", recipe.id);
     if (dLErr) { setBusy(false); return toast.error(dLErr.message); }
     if (lines.length > 0) {
-      const payload = lines.map((l, i) => ({
-        recipe_id: recipe.id,
-        ingredient_id: l.ingredient_id,
-        quantity: Number(l.quantity) || 0,
-        unit_override: l.unit_override,
-        ingredient_note: l.ingredient_note,
-        position: i,
-      }));
-      const { error } = await supabase.from("recipe_ingredients").insert(payload);
-      if (error) { setBusy(false); return toast.error(error.message); }
+      const payload = lines
+        .filter((l) => l.ingredient_id)
+        .map((l, i) => ({
+          recipe_id: recipe.id,
+          ingredient_id: l.ingredient_id,
+          quantity: Number(l.quantity) || 0,
+          unit_override: l.unit_override,
+          ingredient_note: l.ingredient_note,
+          position: i,
+        }));
+      if (payload.length > 0) {
+        const { error } = await supabase.from("recipe_ingredients").insert(payload);
+        if (error) { setBusy(false); return toast.error(error.message); }
+      }
     }
 
     // Replace steps
