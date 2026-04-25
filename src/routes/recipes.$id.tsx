@@ -16,6 +16,7 @@ import { ALLERGENS, DIETARY, ALLERGEN_EMOJI, DIETARY_EMOJI } from "@/lib/taxonom
 import { AllergenChips, DietaryChips } from "@/components/Chips";
 import { downloadRecipePdf } from "@/lib/recipe-pdf";
 import { RecipePreview } from "@/components/RecipePreview";
+import { IngredientCombobox } from "@/components/IngredientCombobox";
 
 export const Route = createFileRoute("/recipes/$id")({
   component: RecipeDetail,
@@ -117,9 +118,8 @@ function RecipeDetail() {
   const updateRecipe = (patch: Partial<Recipe>) => setRecipe((r) => (r ? { ...r, ...patch } : r));
 
   const addLine = () => {
-    if (ingredients.length === 0) return toast.error("Add ingredients first.");
     setLines((ls) => [...ls, {
-      ingredient_id: ingredients[0].id, quantity: 0,
+      ingredient_id: ingredients[0]?.id ?? "", quantity: 0,
       unit_override: null, ingredient_note: null, position: ls.length,
     }]);
   };
@@ -144,16 +144,20 @@ function RecipeDetail() {
     const { error: dLErr } = await supabase.from("recipe_ingredients").delete().eq("recipe_id", recipe.id);
     if (dLErr) { setBusy(false); return toast.error(dLErr.message); }
     if (lines.length > 0) {
-      const payload = lines.map((l, i) => ({
-        recipe_id: recipe.id,
-        ingredient_id: l.ingredient_id,
-        quantity: Number(l.quantity) || 0,
-        unit_override: l.unit_override,
-        ingredient_note: l.ingredient_note,
-        position: i,
-      }));
-      const { error } = await supabase.from("recipe_ingredients").insert(payload);
-      if (error) { setBusy(false); return toast.error(error.message); }
+      const payload = lines
+        .filter((l) => l.ingredient_id)
+        .map((l, i) => ({
+          recipe_id: recipe.id,
+          ingredient_id: l.ingredient_id,
+          quantity: Number(l.quantity) || 0,
+          unit_override: l.unit_override,
+          ingredient_note: l.ingredient_note,
+          position: i,
+        }));
+      if (payload.length > 0) {
+        const { error } = await supabase.from("recipe_ingredients").insert(payload);
+        if (error) { setBusy(false); return toast.error(error.message); }
+      }
     }
 
     // Replace steps
@@ -269,12 +273,6 @@ function RecipeDetail() {
                 <Plus className="h-4 w-4 mr-1" /> Add line
               </Button>
             </div>
-            {ingredients.length === 0 && (
-              <p className="mt-4 text-sm text-muted-foreground">
-                No ingredients in your library yet.{" "}
-                <Link to="/ingredients" className="text-primary underline">Add some first.</Link>
-              </p>
-            )}
             {lines.length === 0 ? (
               <p className="mt-6 text-sm text-muted-foreground">No ingredients in this recipe yet.</p>
             ) : (
@@ -285,15 +283,14 @@ function RecipeDetail() {
                   return (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-5">
-                        <Select value={l.ingredient_id}
-                          onValueChange={(v) => setLines((ls) => ls.map((x, i) => (i === idx ? { ...x, ingredient_id: v } : x)))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {ingredients.map((i) => (
-                              <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <IngredientCombobox
+                          ingredients={ingredients}
+                          value={l.ingredient_id}
+                          onChange={(v) =>
+                            setLines((ls) => ls.map((x, i) => (i === idx ? { ...x, ingredient_id: v } : x)))
+                          }
+                          onCreated={(ing) => setIngredients((all) => [...all, ing].sort((a, b) => a.name.localeCompare(b.name)))}
+                        />
                       </div>
                       <div className="col-span-2">
                         <Input value={l.ingredient_note ?? ""} placeholder="[note]"
