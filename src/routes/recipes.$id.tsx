@@ -388,6 +388,22 @@ function RecipeDetail() {
             <Button className="w-full mt-6" onClick={saveAll} disabled={busy}>
               <Save className="h-4 w-4 mr-1" /> {busy ? "Saving…" : "Save recipe"}
             </Button>
+            <Button
+              variant="outline"
+              className="w-full mt-2"
+              onClick={() =>
+                downloadRecipePdf({
+                  recipe,
+                  lines,
+                  steps,
+                  ingMap,
+                  totals: { totalCost, perPortion, suggested, profit },
+                  allergens: allergenSet,
+                })
+              }
+            >
+              <Download className="h-4 w-4 mr-1" /> Download PDF
+            </Button>
           </div>
           <div className="text-xs text-muted-foreground px-1">
             <DietaryChips items={recipe.dietary} />
