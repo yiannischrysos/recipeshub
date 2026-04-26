@@ -1,4 +1,4 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, ClientOnly } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { AppHeader } from "@/components/AppHeader";
@@ -68,7 +68,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <AuthProvider>
-      <PresenceMount />
+      <ClientOnly fallback={null}>
+        <PresenceMount />
+      </ClientOnly>
       <div className="min-h-screen flex flex-col">
         <AppHeader />
         <main className="flex-1">
