@@ -125,15 +125,27 @@ function RecipesIndex() {
 
   if (loading || !user) return null;
 
+  const categoryCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    items.forEach((r) => {
+      const k = r.category ?? "Uncategorized";
+      map.set(k, (map.get(k) ?? 0) + 1);
+    });
+    return map;
+  }, [items]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
+      {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-4xl">Recipes</h1>
-          <p className="text-muted-foreground mt-1">{items.length} recipes · costed end to end.</p>
+          <h1 className="font-display text-4xl md:text-5xl">Recipes</h1>
+          <p className="text-muted-foreground mt-1">
+            {items.length} {items.length === 1 ? "recipe" : "recipes"} · costed end to end.
+          </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-1" /> New recipe</Button></DialogTrigger>
+          <DialogTrigger asChild><Button size="lg"><Plus className="h-4 w-4 mr-1" /> New recipe</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle className="font-display text-2xl">New recipe</DialogTitle></DialogHeader>
             <form onSubmit={create} className="space-y-4">
@@ -147,21 +159,42 @@ function RecipesIndex() {
         </Dialog>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search recipes…" className="pl-9" />
+      {/* Category quick-pick grid */}
+      {categories.length > 1 && (
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5">
+          {categories.map((c) => {
+            const active = cat === c;
+            const count = c === "All" ? items.length : (categoryCounts.get(c) ?? 0);
+            return (
+              <button
+                key={c}
+                onClick={() => setCat(c)}
+                className={`group rounded-2xl border p-4 text-left transition-all ${
+                  active
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-card border-border hover:border-primary/40 hover:bg-card"
+                }`}
+              >
+                <div className={`text-[10px] uppercase tracking-widest ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                  {count} {count === 1 ? "recipe" : "recipes"}
+                </div>
+                <div className="mt-1 font-display text-lg leading-tight truncate">{c}</div>
+              </button>
+            );
+          })}
         </div>
-        <div className="flex flex-wrap gap-1.5">
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCat(c)}
-              className={`text-xs rounded-full px-3 py-1.5 border transition ${
-                cat === c ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:bg-secondary"
-              }`}
-            >{c}</button>
-          ))}
+      )}
+
+      {/* Search */}
+      <div className="mt-6 sticky top-2 z-10">
+        <div className="relative">
+          <Search className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search recipes…"
+            className="pl-11 h-12 rounded-full bg-card/90 backdrop-blur shadow-sm"
+          />
         </div>
       </div>
 
