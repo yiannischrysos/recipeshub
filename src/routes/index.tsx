@@ -2,11 +2,23 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Calculator, Sparkles } from "lucide-react";
+import {
+  BookOpen, Calculator, Sparkles, Croissant, Cookie, CakeSlice,
+  IceCream, Wheat, Coffee, ArrowRight, Check,
+} from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
+
+const CATEGORIES = [
+  { icon: Croissant, label: "Viennoiserie" },
+  { icon: CakeSlice, label: "Cakes" },
+  { icon: Cookie, label: "Cookies" },
+  { icon: IceCream, label: "Desserts" },
+  { icon: Wheat, label: "Breads" },
+  { icon: Coffee, label: "Beverages" },
+];
 
 function Index() {
   const { user, loading } = useAuth();
@@ -18,39 +30,114 @@ function Index() {
 
   return (
     <div className="relative overflow-hidden">
+      {/* Soft ambient background */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 opacity-60"
+        className="absolute inset-0 -z-10"
         style={{
           background:
-            "radial-gradient(60% 60% at 80% 0%, oklch(0.85 0.08 60 / 0.5), transparent 60%), radial-gradient(50% 50% at 0% 100%, oklch(0.78 0.11 60 / 0.35), transparent 60%)",
+            "radial-gradient(55% 55% at 85% -10%, oklch(0.85 0.08 60 / 0.55), transparent 60%), radial-gradient(45% 45% at -10% 110%, oklch(0.78 0.11 60 / 0.4), transparent 60%)",
         }}
       />
-      <section className="mx-auto max-w-6xl px-6 pt-20 pb-24 md:pt-28 md:pb-32">
-        <div className="max-w-3xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5" /> For pastry & bakery chefs
-          </span>
-          <h1 className="mt-6 font-display text-5xl md:text-7xl font-semibold leading-[1.05] text-foreground">
-            Your recipe book,
-            <br />
-            <span className="italic text-primary">costed to the gram.</span>
-          </h1>
-          <p className="mt-6 text-lg text-muted-foreground max-w-xl">
-            Build your ingredient library, save your recipes, and instantly know what each
-            portion costs — and what to charge for it.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => nav({ to: "/auth" })}>
-              Get started
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link to="/auth">I already have an account</Link>
-            </Button>
+
+      {/* HERO */}
+      <section className="mx-auto max-w-6xl px-6 pt-16 pb-20 md:pt-24 md:pb-28">
+        <div className="grid gap-12 md:grid-cols-[1.3fr,1fr] md:items-center">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5" /> RecipesHub
+            </span>
+            <h1 className="mt-6 font-display text-5xl md:text-7xl font-semibold leading-[1.02] text-foreground">
+              Your recipe book,
+              <br />
+              <span className="italic text-primary">costed to the gram.</span>
+            </h1>
+            <p className="mt-6 text-lg text-muted-foreground max-w-xl">
+              Build your ingredient library, save your recipes, and instantly
+              know what each portion costs — and what to charge for it.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button size="lg" onClick={() => nav({ to: "/auth" })}>
+                Get started <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link to="/auth">I have an account</Link>
+              </Button>
+            </div>
+
+            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              {["Free to start", "No credit card", "Built for chefs"].map((t) => (
+                <li key={t} className="inline-flex items-center gap-1.5">
+                  <Check className="h-4 w-4 text-primary" /> {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Sample card preview */}
+          <div className="relative">
+            <div className="absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-br from-accent/40 to-primary/10 blur-2xl" />
+            <div className="rounded-3xl border border-border bg-card/90 backdrop-blur p-6 shadow-xl">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Recipe</span>
+                <span className="text-[10px] uppercase tracking-widest text-primary">12 portions</span>
+              </div>
+              <h3 className="mt-2 font-display text-3xl">Almond Croissant</h3>
+              <div className="mt-4 space-y-2 text-sm">
+                {[
+                  ["Butter", "560 g", "€4.20"],
+                  ["Flour T55", "1 kg", "€1.85"],
+                  ["Almond cream", "300 g", "€3.40"],
+                ].map(([n, q, c]) => (
+                  <div key={n} className="flex items-center justify-between border-b border-dashed border-border/70 pb-1.5">
+                    <span className="text-foreground">{n}</span>
+                    <span className="text-muted-foreground">{q}</span>
+                    <span className="font-medium tabular-nums">{c}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex items-end justify-between">
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Per portion</div>
+                  <div className="font-display text-2xl">€0.79</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Suggested</div>
+                  <div className="font-display text-2xl text-primary">€3.20</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div className="mt-20 grid gap-6 md:grid-cols-3">
+      {/* CATEGORIES STRIP */}
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div>
+            <h2 className="font-display text-3xl md:text-4xl">Every recipe, organized.</h2>
+            <p className="text-muted-foreground mt-1">Group by category. Find anything in seconds.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+          {CATEGORIES.map((c) => (
+            <div
+              key={c.label}
+              className="group rounded-2xl border border-border bg-card/70 hover:bg-card hover:border-primary/40 transition-colors p-4 flex flex-col items-center text-center"
+            >
+              <div className="h-11 w-11 rounded-xl bg-secondary grid place-items-center text-primary group-hover:scale-105 transition-transform">
+                <c.icon className="h-5 w-5" />
+              </div>
+              <span className="mt-3 text-sm font-medium">{c.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="mx-auto max-w-6xl px-6 pb-24">
+        <div className="grid gap-6 md:grid-cols-3">
           {[
             { icon: BookOpen, title: "Recipe library", body: "Categorize, edit and revisit every recipe in one place." },
             { icon: Calculator, title: "Live costing", body: "Each ingredient quantity rolls up into total and per-portion cost." },
@@ -64,6 +151,19 @@ function Index() {
               <p className="mt-2 text-sm text-muted-foreground">{f.body}</p>
             </div>
           ))}
+        </div>
+
+        {/* CTA */}
+        <div className="mt-16 rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-accent/10 to-transparent p-10 md:p-14 text-center">
+          <h2 className="font-display text-3xl md:text-5xl">Start costing your kitchen today.</h2>
+          <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
+            Join chefs who price with confidence. Free to get started.
+          </p>
+          <div className="mt-6 flex justify-center gap-3 flex-wrap">
+            <Button size="lg" onClick={() => nav({ to: "/auth" })}>
+              Create your account <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </div>
       </section>
     </div>
