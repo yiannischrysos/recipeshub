@@ -67,6 +67,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <AuthProvider>
+      <PresenceMount />
       <div className="min-h-screen flex flex-col">
         <AppHeader />
         <main className="flex-1">
@@ -76,4 +77,11 @@ function RootComponent() {
       <Toaster richColors position="top-center" />
     </AuthProvider>
   );
+}
+
+function PresenceMount() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { usePresence } = require("@/hooks/use-presence");
+  usePresence();
+  return null;
 }
