@@ -81,8 +81,6 @@ function RootComponent() {
 }
 
 function PresenceMount() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { usePresence } = require("@/hooks/use-presence");
   usePresence();
   return null;
 }
