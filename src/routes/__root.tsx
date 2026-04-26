@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { AppHeader } from "@/components/AppHeader";
+import { usePresence } from "@/hooks/use-presence";
 
 import appCss from "../styles.css?url";
 
