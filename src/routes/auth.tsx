@@ -30,7 +30,7 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -39,6 +39,10 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        // Supabase returns a user with empty identities array if email already exists
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+          throw new Error("An account with this email already exists. Please sign in instead.");
+        }
         toast.success("Account created. You can sign in now.");
         setMode("signin");
       } else {

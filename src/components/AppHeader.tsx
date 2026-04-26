@@ -1,10 +1,12 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
+import { useIsAdmin } from "@/hooks/use-role";
 import { Button } from "@/components/ui/button";
-import { ChefHat, LogOut } from "lucide-react";
+import { ChefHat, LogOut, User, Shield } from "lucide-react";
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const loc = useLocation();
   const nav = useNavigate();
 
@@ -31,22 +33,33 @@ export function AppHeader() {
           <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground grid place-items-center">
             <ChefHat className="h-5 w-5" />
           </div>
-          <span className="font-display text-xl font-semibold tracking-tight">Pâtisserie</span>
+          <span className="font-display text-xl font-semibold tracking-tight">RecipesHub</span>
         </Link>
 
         {user && (
           <nav className="hidden md:flex items-center gap-1">
             {link("/recipes", "Recipes")}
             {link("/ingredients", "Ingredients")}
+            {link("/profile", "Profile")}
+            {isAdmin && link("/admin", "Admin")}
           </nav>
         )}
 
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <span className="hidden sm:inline text-sm text-muted-foreground">
+              <Link
+                to="/profile"
+                className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <User className="h-4 w-4" />
                 {user.email}
-              </span>
+              </Link>
+              {isAdmin && (
+                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium">
+                  <Shield className="h-3 w-3" /> Admin
+                </span>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -66,9 +79,11 @@ export function AppHeader() {
         </div>
       </div>
       {user && (
-        <nav className="md:hidden flex items-center gap-1 px-4 pb-3">
+        <nav className="md:hidden flex items-center gap-1 px-4 pb-3 overflow-x-auto">
           {link("/recipes", "Recipes")}
           {link("/ingredients", "Ingredients")}
+          {link("/profile", "Profile")}
+          {isAdmin && link("/admin", "Admin")}
         </nav>
       )}
     </header>

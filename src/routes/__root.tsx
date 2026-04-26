@@ -2,6 +2,7 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/r
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { AppHeader } from "@/components/AppHeader";
+import { usePresence } from "@/hooks/use-presence";
 
 import appCss from "../styles.css?url";
 
@@ -67,6 +68,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <AuthProvider>
+      <PresenceMount />
       <div className="min-h-screen flex flex-col">
         <AppHeader />
         <main className="flex-1">
@@ -76,4 +78,9 @@ function RootComponent() {
       <Toaster richColors position="top-center" />
     </AuthProvider>
   );
+}
+
+function PresenceMount() {
+  usePresence();
+  return null;
 }
