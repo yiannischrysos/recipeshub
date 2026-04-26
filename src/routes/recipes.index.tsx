@@ -123,8 +123,6 @@ function RecipesIndex() {
     return Array.from(groups.values());
   }, [filtered]);
 
-  if (loading || !user) return null;
-
   const categoryCounts = useMemo(() => {
     const map = new Map<string, number>();
     items.forEach((r) => {
@@ -133,6 +131,8 @@ function RecipesIndex() {
     });
     return map;
   }, [items]);
+
+  if (loading || !user) return null;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
