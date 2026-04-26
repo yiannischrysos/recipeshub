@@ -6,6 +6,7 @@ export function usePresence() {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (!user) return;
     let stopped = false;
 
