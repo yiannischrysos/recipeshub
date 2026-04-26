@@ -68,7 +68,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <AuthProvider>
-      <PresenceMount />
+      <ClientOnly fallback={null}>
+        <PresenceMount />
+      </ClientOnly>
       <div className="min-h-screen flex flex-col">
         <AppHeader />
         <main className="flex-1">
