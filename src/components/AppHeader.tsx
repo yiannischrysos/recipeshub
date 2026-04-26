@@ -31,7 +31,7 @@ export function AppHeader() {
           <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground grid place-items-center">
             <ChefHat className="h-5 w-5" />
           </div>
-          <span className="font-display text-xl font-semibold tracking-tight">Pâtisserie</span>
+          <span className="font-display text-xl font-semibold tracking-tight">RecipesHub</span>
         </Link>
 
         {user && (
