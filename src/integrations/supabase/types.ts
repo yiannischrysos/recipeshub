@@ -136,6 +136,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_icon: string | null
           avatar_url: string | null
           bio_note: string | null
           created_at: string
@@ -147,6 +148,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_icon?: string | null
           avatar_url?: string | null
           bio_note?: string | null
           created_at?: string
@@ -158,6 +160,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_icon?: string | null
           avatar_url?: string | null
           bio_note?: string | null
           created_at?: string
@@ -380,7 +383,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "free" | "premium"
       friend_request_status: "pending" | "accepted" | "declined"
     }
     CompositeTypes: {
@@ -509,7 +512,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "free", "premium"],
       friend_request_status: ["pending", "accepted", "declined"],
     },
   },
