@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useUserRole, roleLabel, roleBadgeClass } from "@/hooks/use-role";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,11 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { User as UserIcon, UserPlus, UserCheck, UserX, Trash2, Search, Users } from "lucide-react";
+import { UserPlus, UserCheck, UserX, Trash2, Search, Users, Eye } from "lucide-react";
+import { ChefAvatar } from "@/components/ChefAvatar";
+import { AvatarPicker } from "@/components/AvatarPicker";
+import { lastSeenLabel } from "@/lib/relative-time";
+import type { ChefIcon } from "@/lib/avatars";
 
 type SearchParams = { u?: string };
 
@@ -29,6 +34,7 @@ type Profile = {
   nickname: string | null;
   bio_note: string | null;
   avatar_url: string | null;
+  avatar_icon: string | null;
 };
 
 type Presence = { is_online: boolean; last_seen_at: string };
@@ -51,13 +57,52 @@ function ProfilePage() {
   );
 }
 
+// ---------- Counts hook (followers / following / friends) ----------
+function useSocialCounts(userId: string | undefined) {
+  const [counts, setCounts] = useState({ followers: 0, following: 0, friends: 0 });
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const [{ count: followers }, { count: following }, { count: f1 }, { count: f2 }] =
+        await Promise.all([
+          supabase.from("follows").select("*", { count: "exact", head: true }).eq("following_id", userId),
+          supabase.from("follows").select("*", { count: "exact", head: true }).eq("follower_id", userId),
+          supabase.from("friendships").select("*", { count: "exact", head: true }).eq("user_a", userId),
+          supabase.from("friendships").select("*", { count: "exact", head: true }).eq("user_b", userId),
+        ]);
+      if (cancelled) return;
+      setCounts({
+        followers: followers ?? 0,
+        following: following ?? 0,
+        friends: (f1 ?? 0) + (f2 ?? 0),
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [userId]);
+  return counts;
+}
+
+function StatPill({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl bg-secondary/60 px-3 py-2 text-center min-w-[70px]">
+      <div className="font-display text-xl tabular-nums">{value}</div>
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+// ============= OWN PROFILE =============
 function OwnProfile() {
   const { user, signOut } = useAuth();
   const nav = useNavigate();
+  const { role } = useUserRole();
+  const counts = useSocialCounts(user!.id);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [presence, setPresence] = useState<Presence | null>(null);
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
+  const [avatarIcon, setAvatarIcon] = useState<ChefIcon>("chef_male");
   const [email, setEmail] = useState(user!.email ?? "");
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
@@ -69,13 +114,14 @@ function OwnProfile() {
   const load = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id,display_name,nickname,bio_note,avatar_url")
+      .select("id,display_name,nickname,bio_note,avatar_url,avatar_icon")
       .eq("id", user!.id)
       .maybeSingle();
     if (data) {
       setProfile(data as Profile);
       setNickname(data.nickname ?? "");
       setBio(data.bio_note ?? "");
+      setAvatarIcon(data.avatar_icon === "chef_female" ? "chef_female" : "chef_male");
     }
     const { data: pres } = await supabase
       .from("user_presence").select("is_online,last_seen_at").eq("user_id", user!.id).maybeSingle();
@@ -88,7 +134,11 @@ function OwnProfile() {
     setBusy(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ nickname: nickname.trim() || null, bio_note: bio.trim() || null })
+      .update({
+        nickname: nickname.trim() || null,
+        bio_note: bio.trim() || null,
+        avatar_icon: avatarIcon,
+      })
       .eq("id", user!.id);
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -119,7 +169,6 @@ function OwnProfile() {
   const deleteAccount = async () => {
     if (!deletePwd) return toast.error("Please enter your password to confirm");
     setDeleting(true);
-    // Re-auth
     const { error: authErr } = await supabase.auth.signInWithPassword({
       email: user!.email!,
       password: deletePwd,
@@ -128,30 +177,44 @@ function OwnProfile() {
       setDeleting(false);
       return toast.error("Wrong password");
     }
-    // Delete profile (cascades will clean ingredients/recipes via RLS-owned data)
-    // Note: auth.users row deletion requires admin; we mark profile + sign out.
-    // Hard-delete user data:
     await supabase.from("recipes").delete().eq("user_id", user!.id);
     await supabase.from("ingredients").delete().eq("user_id", user!.id);
     await supabase.from("profiles").delete().eq("id", user!.id);
     await signOut();
     setDeleting(false);
-    toast.success("Account data deleted. Sign-up email is now released.");
+    toast.success("Account data deleted.");
     nav({ to: "/" });
   };
 
   return (
     <div className="space-y-8">
-      <header className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-primary text-primary-foreground grid place-items-center">
-          <UserIcon className="h-8 w-8" />
-        </div>
-        <div>
-          <h1 className="font-display text-3xl">{profile?.nickname || profile?.display_name || "Your profile"}</h1>
-          <p className="text-sm text-muted-foreground">
-            {presence?.is_online ? "🟢 Online" : presence ? `Last seen ${new Date(presence.last_seen_at).toLocaleString()}` : ""}
+      <header className="flex flex-wrap items-start gap-4">
+        <ChefAvatar icon={profile?.avatar_icon} size={80} />
+        <div className="flex-1 min-w-[200px]">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-display text-3xl">{profile?.nickname || profile?.display_name || "Your profile"}</h1>
+            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${roleBadgeClass(role)}`}>
+              {roleLabel(role)}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            {presence?.is_online ? "🟢 Online now" : presence ? lastSeenLabel(false, presence.last_seen_at) : "—"}
           </p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <StatPill label="Followers" value={counts.followers} />
+            <StatPill label="Following" value={counts.following} />
+            <StatPill label="Friends" value={counts.friends} />
+          </div>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => nav({ to: "/profile", search: { u: user!.id }, replace: false })}
+          className="self-start"
+          title="See how others see your profile"
+        >
+          <Eye className="h-4 w-4" /> View as visitor
+        </Button>
       </header>
 
       <Tabs defaultValue="profile">
@@ -161,7 +224,12 @@ function OwnProfile() {
           <TabsTrigger value="social">Friends & Followers</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="space-y-4 pt-6">
+        <TabsContent value="profile" className="space-y-6 pt-6">
+          <div className="space-y-2">
+            <Label>Profile picture</Label>
+            <AvatarPicker value={avatarIcon} onChange={setAvatarIcon} />
+            <p className="text-xs text-muted-foreground">Pick a chef. Click <em>Save profile</em> to apply.</p>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="nickname">Nickname (shown to others)</Label>
             <Input id="nickname" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={50} />
@@ -218,20 +286,33 @@ function OwnProfile() {
   );
 }
 
+// ============= OTHER USER PROFILE =============
 function OtherProfile({ userId }: { userId: string }) {
   const { user } = useAuth();
+  const counts = useSocialCounts(userId);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [presence, setPresence] = useState<Presence | null>(null);
   const [followsThem, setFollowsThem] = useState(false);
   const [friendStatus, setFriendStatus] = useState<"none" | "pending_out" | "pending_in" | "friends">("none");
   const [busy, setBusy] = useState(false);
+  // For showing the user's tier badge on others' profiles
+  const [theirRole, setTheirRole] = useState<"admin" | "premium" | "free">("free");
 
   const load = async () => {
     const { data: p } = await supabase
-      .from("profiles").select("id,display_name,nickname,bio_note,avatar_url").eq("id", userId).maybeSingle();
+      .from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon").eq("id", userId).maybeSingle();
     setProfile(p as Profile | null);
     const { data: pres } = await supabase.from("user_presence").select("is_online,last_seen_at").eq("user_id", userId).maybeSingle();
     setPresence(pres as Presence | null);
+
+    // Their role (best-effort; admins are visible to all by `users can view own roles` policy
+    // restricting non-self access — so we just attempt and fall back to free)
+    const { data: rolesData } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const roles = (rolesData ?? []).map((r) => r.role as string);
+    if (roles.includes("admin")) setTheirRole("admin");
+    else if (roles.includes("premium")) setTheirRole("premium");
+    else setTheirRole("free");
+
     if (!user) return;
     const { data: f } = await supabase.from("follows").select("id").eq("follower_id", user.id).eq("following_id", userId).maybeSingle();
     setFollowsThem(!!f);
@@ -293,18 +374,26 @@ function OtherProfile({ userId }: { userId: string }) {
   if (!profile) return <div className="text-muted-foreground">Loading profile…</div>;
 
   return (
-    <div className="space-y-8">
-      <header className="flex items-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-primary text-primary-foreground grid place-items-center">
-          <UserIcon className="h-8 w-8" />
-        </div>
-        <div className="flex-1">
-          <h1 className="font-display text-3xl">{profile.nickname || profile.display_name || "User"}</h1>
-          <p className="text-sm text-muted-foreground">
-            {presence?.is_online ? "🟢 Online now" : presence ? `Last seen ${new Date(presence.last_seen_at).toLocaleDateString()}` : ""}
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-start gap-4">
+        <ChefAvatar icon={profile.avatar_icon} size={80} />
+        <div className="flex-1 min-w-[200px]">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-display text-3xl">{profile.nickname || profile.display_name || "User"}</h1>
+            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${roleBadgeClass(theirRole)}`}>
+              {roleLabel(theirRole)}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            {presence?.is_online ? "🟢 Online now" : lastSeenLabel(false, presence?.last_seen_at)}
           </p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            <StatPill label="Followers" value={counts.followers} />
+            <StatPill label="Following" value={counts.following} />
+            <StatPill label="Friends" value={counts.friends} />
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-start">
           <Button variant={followsThem ? "outline" : "default"} size="sm" onClick={toggleFollow} disabled={busy}>
             {followsThem ? "Following" : <><UserPlus className="h-4 w-4" /> Follow</>}
           </Button>
@@ -330,6 +419,7 @@ function OtherProfile({ userId }: { userId: string }) {
   );
 }
 
+// ============= SOCIAL PANEL =============
 function SocialPanel({ userId }: { userId: string }) {
   const nav = useNavigate();
   const [tab, setTab] = useState<"discover" | "requests" | "friends" | "followers" | "following">("discover");
@@ -338,7 +428,7 @@ function SocialPanel({ userId }: { userId: string }) {
   const [q, setQ] = useState("");
 
   const loadDiscover = async () => {
-    let qb = supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url").neq("id", userId).limit(50);
+    let qb = supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon").neq("id", userId).limit(50);
     if (q.trim()) qb = qb.or(`nickname.ilike.%${q}%,display_name.ilike.%${q}%`);
     const { data } = await qb;
     setUsers((data ?? []) as Profile[]);
@@ -348,7 +438,7 @@ function SocialPanel({ userId }: { userId: string }) {
     const { data } = await supabase.from("friend_requests").select("id,sender_id").eq("receiver_id", userId).eq("status", "pending");
     const ids = (data ?? []).map((r) => r.sender_id);
     if (ids.length === 0) { setRequests([]); return; }
-    const { data: profs } = await supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url").in("id", ids);
+    const { data: profs } = await supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon").in("id", ids);
     setRequests((data ?? []).map((r) => ({ ...r, profile: (profs ?? []).find((p) => p.id === r.sender_id) as Profile | null })));
   };
 
@@ -356,7 +446,7 @@ function SocialPanel({ userId }: { userId: string }) {
     const { data } = await supabase.from("friendships").select("user_a,user_b").or(`user_a.eq.${userId},user_b.eq.${userId}`);
     const ids = (data ?? []).map((f) => f.user_a === userId ? f.user_b : f.user_a);
     if (ids.length === 0) { setUsers([]); return; }
-    const { data: profs } = await supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url").in("id", ids);
+    const { data: profs } = await supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon").in("id", ids);
     setUsers((profs ?? []) as Profile[]);
   };
 
@@ -364,7 +454,7 @@ function SocialPanel({ userId }: { userId: string }) {
     const { data } = await supabase.from("follows").select("follower_id").eq("following_id", userId);
     const ids = (data ?? []).map((f) => f.follower_id);
     if (ids.length === 0) { setUsers([]); return; }
-    const { data: profs } = await supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url").in("id", ids);
+    const { data: profs } = await supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon").in("id", ids);
     setUsers((profs ?? []) as Profile[]);
   };
 
@@ -372,7 +462,7 @@ function SocialPanel({ userId }: { userId: string }) {
     const { data } = await supabase.from("follows").select("following_id").eq("follower_id", userId);
     const ids = (data ?? []).map((f) => f.following_id);
     if (ids.length === 0) { setUsers([]); return; }
-    const { data: profs } = await supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url").in("id", ids);
+    const { data: profs } = await supabase.from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon").in("id", ids);
     setUsers((profs ?? []) as Profile[]);
   };
 
@@ -417,10 +507,13 @@ function SocialPanel({ userId }: { userId: string }) {
           {requests.length === 0 && <div className="p-4 text-sm text-muted-foreground">No pending requests.</div>}
           {requests.map((r) => (
             <div key={r.id} className="p-3 flex items-center gap-3">
-              <UserIcon className="h-5 w-5 text-muted-foreground" />
+              <ChefAvatar icon={r.profile?.avatar_icon} size={36} />
               <button className="flex-1 text-left text-sm hover:underline" onClick={() => nav({ to: "/profile", search: { u: r.sender_id } })}>
                 {r.profile?.nickname || r.profile?.display_name || "User"}
               </button>
+              <Button size="sm" variant="outline" onClick={() => nav({ to: "/profile", search: { u: r.sender_id } })}>
+                <Eye className="h-3.5 w-3.5" /> View
+              </Button>
               <Button size="sm" onClick={() => respond(r.id, "accepted")}>Accept</Button>
               <Button size="sm" variant="outline" onClick={() => respond(r.id, "declined")}>Decline</Button>
             </div>
@@ -430,17 +523,20 @@ function SocialPanel({ userId }: { userId: string }) {
         <div className="divide-y divide-border rounded-lg border border-border bg-card">
           {users.length === 0 && <div className="p-4 text-sm text-muted-foreground">Nobody here yet.</div>}
           {users.map((p) => (
-            <button
-              key={p.id}
-              className="w-full p-3 flex items-center gap-3 text-left hover:bg-secondary/40 transition-colors"
-              onClick={() => nav({ to: "/profile", search: { u: p.id } })}
-            >
-              <UserIcon className="h-5 w-5 text-muted-foreground" />
-              <div className="flex-1">
-                <div className="text-sm font-medium">{p.nickname || p.display_name || "User"}</div>
+            <div key={p.id} className="p-3 flex items-center gap-3">
+              <ChefAvatar icon={p.avatar_icon} size={36} />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{p.nickname || p.display_name || "User"}</div>
                 {p.bio_note && <div className="text-xs text-muted-foreground line-clamp-1">{p.bio_note}</div>}
               </div>
-            </button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => nav({ to: "/profile", search: { u: p.id } })}
+              >
+                <Eye className="h-3.5 w-3.5" /> View
+              </Button>
+            </div>
           ))}
         </div>
       )}
