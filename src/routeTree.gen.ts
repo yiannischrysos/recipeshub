@@ -20,6 +20,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RecipesIndexRouteImport } from './routes/recipes.index'
 import { Route as GroupsIndexRouteImport } from './routes/groups.index'
 import { Route as RecipesIdRouteImport } from './routes/recipes.$id'
+import { Route as GroupsIdRouteImport } from './routes/groups.$id'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -76,6 +77,11 @@ const RecipesIdRoute = RecipesIdRouteImport.update({
   path: '/recipes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GroupsIdRoute = GroupsIdRouteImport.update({
+  id: '/groups/$id',
+  path: '/groups/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/groups/$id': typeof GroupsIdRoute
   '/recipes/$id': typeof RecipesIdRoute
   '/groups/': typeof GroupsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/groups/$id': typeof GroupsIdRoute
   '/recipes/$id': typeof RecipesIdRoute
   '/groups': typeof GroupsIndexRoute
   '/recipes': typeof RecipesIndexRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/groups/$id': typeof GroupsIdRoute
   '/recipes/$id': typeof RecipesIdRoute
   '/groups/': typeof GroupsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/profile'
     | '/reset-password'
+    | '/groups/$id'
     | '/recipes/$id'
     | '/groups/'
     | '/recipes/'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/profile'
     | '/reset-password'
+    | '/groups/$id'
     | '/recipes/$id'
     | '/groups'
     | '/recipes'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/messages'
     | '/profile'
     | '/reset-password'
+    | '/groups/$id'
     | '/recipes/$id'
     | '/groups/'
     | '/recipes/'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   MessagesRoute: typeof MessagesRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  GroupsIdRoute: typeof GroupsIdRoute
   RecipesIdRoute: typeof RecipesIdRoute
   GroupsIndexRoute: typeof GroupsIndexRoute
   RecipesIndexRoute: typeof RecipesIndexRoute
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecipesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/groups/$id': {
+      id: '/groups/$id'
+      path: '/groups/$id'
+      fullPath: '/groups/$id'
+      preLoaderRoute: typeof GroupsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -264,6 +284,7 @@ const rootRouteChildren: RootRouteChildren = {
   MessagesRoute: MessagesRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  GroupsIdRoute: GroupsIdRoute,
   RecipesIdRoute: RecipesIdRoute,
   GroupsIndexRoute: GroupsIndexRoute,
   RecipesIndexRoute: RecipesIndexRoute,
