@@ -291,7 +291,7 @@ function MessagesPage() {
                             {p?.avatar_url ? (
                               <AvatarImage src={p.avatar_url} />
                             ) : p?.avatar_icon ? (
-                              <ChefAvatar variant={p.avatar_icon as "male" | "female"} className="h-9 w-9" />
+                              <ChefAvatar icon={p.avatar_icon} className="h-9 w-9" />
                             ) : (
                               <AvatarFallback>{nameOf(p)[0]?.toUpperCase()}</AvatarFallback>
                             )}
@@ -327,7 +327,7 @@ function MessagesPage() {
                         <AvatarImage src={otherProfile.avatar_url} />
                       ) : otherProfile?.avatar_icon ? (
                         <ChefAvatar
-                          variant={otherProfile.avatar_icon as "male" | "female"}
+                          icon={otherProfile.avatar_icon}
                           className="h-9 w-9"
                         />
                       ) : (
@@ -508,7 +508,7 @@ function MessagesPage() {
                     {f.avatar_url ? (
                       <AvatarImage src={f.avatar_url} />
                     ) : f.avatar_icon ? (
-                      <ChefAvatar variant={f.avatar_icon as "male" | "female"} className="h-8 w-8" />
+                      <ChefAvatar icon={f.avatar_icon} className="h-8 w-8" />
                     ) : (
                       <AvatarFallback>{nameOf(f)[0]?.toUpperCase()}</AvatarFallback>
                     )}
