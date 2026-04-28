@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatDistanceToNow } from "@/lib/relative-time";
+import { timeAgo } from "@/lib/relative-time";
 
 type Notif = {
   id: string;
@@ -73,7 +73,7 @@ export function NotificationBell() {
       await supabase.from("notifications").update({ read_at: new Date().toISOString() }).eq("id", n.id);
     }
     setOpen(false);
-    if (n.link) nav({ to: n.link });
+    if (n.link) nav({ to: n.link as any });
   };
 
   if (!user) return null;
@@ -117,7 +117,7 @@ export function NotificationBell() {
                       <div className="text-sm font-medium truncate">{n.title}</div>
                       {n.body && <div className="text-xs text-muted-foreground line-clamp-2">{n.body}</div>}
                       <div className="text-[10px] text-muted-foreground mt-0.5">
-                        {formatDistanceToNow(n.created_at)}
+                        {timeAgo(n.created_at)}
                       </div>
                     </div>
                     {!n.read_at && <span className="h-2 w-2 rounded-full bg-primary mt-2" />}
@@ -128,7 +128,7 @@ export function NotificationBell() {
           )}
         </ScrollArea>
         <div className="border-t border-border px-3 py-2 text-center">
-          <Link to="/announcements" onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">
+          <Link to={"/announcements" as any} onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">
             View all announcements
           </Link>
         </div>
