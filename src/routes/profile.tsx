@@ -333,12 +333,15 @@ function OtherProfile({ userId }: { userId: string }) {
   const toggleFollow = async () => {
     if (!user) return;
     setBusy(true);
-    if (followsThem) {
-      await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", userId);
-    } else {
-      await supabase.from("follows").insert({ follower_id: user.id, following_id: userId });
-    }
+    const op = followsThem
+      ? await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", userId)
+      : await supabase.from("follows").insert({ follower_id: user.id, following_id: userId });
     setBusy(false);
+    if (op.error) {
+      toast.error(op.error.message);
+      return;
+    }
+    toast.success(followsThem ? "Unfollowed" : "Following");
     load();
   };
 
@@ -354,9 +357,10 @@ function OtherProfile({ userId }: { userId: string }) {
   const acceptFriend = async () => {
     if (!user) return;
     setBusy(true);
-    await supabase.from("friend_requests").update({ status: "accepted" })
+    const { error } = await supabase.from("friend_requests").update({ status: "accepted" })
       .eq("sender_id", userId).eq("receiver_id", user.id);
     setBusy(false);
+    if (error) { toast.error(error.message); return; }
     toast.success("Friends!"); load();
   };
 

@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useIsAdmin } from "@/hooks/use-role";
 import { Button } from "@/components/ui/button";
 import { ChefHat, LogOut, User, Shield } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
@@ -40,7 +41,9 @@ export function AppHeader() {
           <nav className="hidden md:flex items-center gap-1">
             {link("/recipes", "Recipes")}
             {link("/ingredients", "Ingredients")}
+            {link("/groups", "Groups")}
             {link("/messages", "Messages")}
+            {link("/announcements", "Updates")}
             {link("/profile", "Profile")}
             {isAdmin && link("/admin", "Admin")}
           </nav>
@@ -49,6 +52,7 @@ export function AppHeader() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
+              <NotificationBell />
               <Link
                 to="/profile"
                 className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
@@ -83,7 +87,9 @@ export function AppHeader() {
         <nav className="md:hidden flex items-center gap-1 px-4 pb-3 overflow-x-auto">
           {link("/recipes", "Recipes")}
           {link("/ingredients", "Ingredients")}
+          {link("/groups", "Groups")}
           {link("/messages", "Messages")}
+          {link("/announcements", "Updates")}
           {link("/profile", "Profile")}
           {isAdmin && link("/admin", "Admin")}
         </nav>
