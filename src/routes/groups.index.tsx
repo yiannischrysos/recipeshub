@@ -47,7 +47,7 @@ function GroupsListPage() {
     if (error) return toast.error(error.message);
     toast.success("Group created");
     setOpen(false); setName(""); setDesc("");
-    nav({ to: "/groups/$id" as any, params: { id: data.id } });
+    nav({ to: "/groups/$id", params: { id: data.id } });
   };
 
   if (!user) return <div className="min-h-screen bg-background"><AppHeader /></div>;
