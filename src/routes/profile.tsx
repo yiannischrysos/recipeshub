@@ -13,7 +13,8 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { UserPlus, UserCheck, UserX, Trash2, Search, Users, Eye } from "lucide-react";
+import { UserPlus, UserCheck, UserX, Trash2, Search, Users, Eye, MessageCircle } from "lucide-react";
+import { getOrCreateConversation } from "@/lib/messaging";
 import { ChefAvatar } from "@/components/ChefAvatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { lastSeenLabel } from "@/lib/relative-time";
