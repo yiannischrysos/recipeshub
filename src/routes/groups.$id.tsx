@@ -481,7 +481,7 @@ function RolesManager({ group, roles, members, profiles, onChange }: {
   };
 
   const updatePerm = async (role: Role, key: keyof Role, value: boolean) => {
-    const { error } = await supabase.from("group_roles").update({ [key]: value }).eq("id", role.id);
+    const { error } = await supabase.from("group_roles").update({ [key]: value } as never).eq("id", role.id);
     if (error) toast.error(error.message); else onChange();
   };
 
