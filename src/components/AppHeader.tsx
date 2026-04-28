@@ -40,6 +40,7 @@ export function AppHeader() {
           <nav className="hidden md:flex items-center gap-1">
             {link("/recipes", "Recipes")}
             {link("/ingredients", "Ingredients")}
+            {link("/messages", "Messages")}
             {link("/profile", "Profile")}
             {isAdmin && link("/admin", "Admin")}
           </nav>
