@@ -394,7 +394,7 @@ function OtherProfile({ userId }: { userId: string }) {
             <StatPill label="Friends" value={counts.friends} />
           </div>
         </div>
-        <div className="flex gap-2 self-start">
+        <div className="flex flex-wrap gap-2 self-start">
           <Button variant={followsThem ? "outline" : "default"} size="sm" onClick={toggleFollow} disabled={busy}>
             {followsThem ? "Following" : <><UserPlus className="h-4 w-4" /> Follow</>}
           </Button>
@@ -408,6 +408,21 @@ function OtherProfile({ userId }: { userId: string }) {
           {friendStatus === "friends" && (
             <Button variant="outline" size="sm" onClick={removeFriend} disabled={busy}><UserX className="h-4 w-4" /> Unfriend</Button>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              if (!user) return;
+              try {
+                await getOrCreateConversation(user.id, userId);
+                window.location.href = "/messages";
+              } catch (e) {
+                toast.error((e as Error).message);
+              }
+            }}
+          >
+            <MessageCircle className="h-4 w-4" /> Message
+          </Button>
         </div>
       </header>
       {profile.bio_note && (
