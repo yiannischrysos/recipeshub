@@ -78,7 +78,7 @@ function GroupsListPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {groups.map((g) => (
-              <Link key={g.id} to={"/groups/$id" as any} params={{ id: g.id }} className="block rounded-xl border border-border bg-card p-4 hover:bg-secondary/50 transition-colors">
+              <Link key={g.id} to="/groups/$id" params={{ id: g.id }} className="block rounded-xl border border-border bg-card p-4 hover:bg-secondary/50 transition-colors">
                 <div className="font-semibold">{g.name}</div>
                 {g.description && <div className="text-sm text-muted-foreground line-clamp-2 mt-1">{g.description}</div>}
               </Link>
