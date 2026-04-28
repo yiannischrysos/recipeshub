@@ -41,7 +41,9 @@ export function AppHeader() {
           <nav className="hidden md:flex items-center gap-1">
             {link("/recipes", "Recipes")}
             {link("/ingredients", "Ingredients")}
+            {link("/groups", "Groups")}
             {link("/messages", "Messages")}
+            {link("/announcements", "Updates")}
             {link("/profile", "Profile")}
             {isAdmin && link("/admin", "Admin")}
           </nav>
@@ -50,6 +52,7 @@ export function AppHeader() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
+              <NotificationBell />
               <Link
                 to="/profile"
                 className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
