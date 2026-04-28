@@ -357,9 +357,10 @@ function OtherProfile({ userId }: { userId: string }) {
   const acceptFriend = async () => {
     if (!user) return;
     setBusy(true);
-    await supabase.from("friend_requests").update({ status: "accepted" })
+    const { error } = await supabase.from("friend_requests").update({ status: "accepted" })
       .eq("sender_id", userId).eq("receiver_id", user.id);
     setBusy(false);
+    if (error) { toast.error(error.message); return; }
     toast.success("Friends!"); load();
   };
 
