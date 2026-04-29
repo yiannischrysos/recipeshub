@@ -12,11 +12,13 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Star } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ALLERGENS, DIETARY, ALLERGEN_EMOJI, DIETARY_EMOJI } from "@/lib/taxonomy";
 import { AllergenChips, DietaryChips } from "@/components/Chips";
+import { useFavorites } from "@/hooks/use-favorites";
+import { FavoriteStar } from "@/components/FavoriteStar";
 
 export const Route = createFileRoute("/ingredients")({
   component: IngredientsPage,
@@ -43,8 +45,10 @@ function IngredientsPage() {
   const nav = useNavigate();
   const [items, setItems] = useState<Ingredient[]>([]);
   const [q, setQ] = useState("");
+  const [favOnly, setFavOnly] = useState(false);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Ingredient | null>(null);
+  const favs = useFavorites("ingredient");
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [loading, user, nav]);
 
@@ -55,10 +59,17 @@ function IngredientsPage() {
   };
   useEffect(() => { if (user) load(); }, [user]);
 
-  const filtered = useMemo(
-    () => items.filter((i) => i.name.toLowerCase().includes(q.toLowerCase())),
-    [items, q],
-  );
+  const filtered = useMemo(() => {
+    return items
+      .filter((i) => i.name.toLowerCase().includes(q.toLowerCase()))
+      .filter((i) => (favOnly ? favs.isFavorite(i.id) : true))
+      .sort((a, b) => {
+        const af = favs.isFavorite(a.id) ? 0 : 1;
+        const bf = favs.isFavorite(b.id) ? 0 : 1;
+        if (af !== bf) return af - bf;
+        return a.name.localeCompare(b.name);
+      });
+  }, [items, q, favOnly, favs.ids]);
 
   const remove = async (id: string) => {
     if (!confirm("Delete this ingredient? Recipes using it will block deletion.")) return;
@@ -85,9 +96,20 @@ function IngredientsPage() {
         </Dialog>
       </div>
 
-      <div className="mt-6 relative">
-        <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ingredients…" className="pl-9 max-w-sm" />
+      <div className="mt-6 flex items-center gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ingredients…" className="pl-9" />
+        </div>
+        <Button
+          type="button"
+          variant={favOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFavOnly((v) => !v)}
+        >
+          <Star className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`} />
+          <span className="hidden sm:inline ml-1">Favorites</span>
+        </Button>
       </div>
 
       <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
@@ -114,6 +136,7 @@ function IngredientsPage() {
                   {i.supplier && <div className="text-xs text-muted-foreground">{i.supplier}</div>}
                 </div>
                 <div className="flex gap-1">
+                  <FavoriteStar active={favs.isFavorite(i.id)} onToggle={() => favs.toggle(i.id)} />
                   <Button size="icon" variant="ghost" onClick={() => { setEditing(i); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                   <Button size="icon" variant="ghost" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>

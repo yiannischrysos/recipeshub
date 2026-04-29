@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
-export type AppRole = "admin" | "premium" | "free" | "user";
+export type AppRole = "admin" | "business" | "premium" | "free" | "user";
 
 export function useIsAdmin() {
   const { user } = useAuth();
@@ -28,7 +28,7 @@ export function useIsAdmin() {
 }
 
 // Returns the highest-tier role for the current user.
-// Order: admin > premium > free.
+// Order: admin > business > premium > free.
 export function useUserRole() {
   const { user } = useAuth();
   const [role, setRole] = useState<AppRole>("free");
@@ -44,6 +44,7 @@ export function useUserRole() {
       .then(({ data }) => {
         const roles = (data ?? []).map((r) => r.role as AppRole);
         if (roles.includes("admin")) setRole("admin");
+        else if (roles.includes("business")) setRole("business");
         else if (roles.includes("premium")) setRole("premium");
         else setRole("free");
         setLoading(false);
@@ -55,12 +56,15 @@ export function useUserRole() {
 
 export function roleLabel(role: AppRole): string {
   if (role === "admin") return "Admin";
+  if (role === "business") return "Business";
   if (role === "premium") return "Premium";
   return "Free";
 }
 
 export function roleBadgeClass(role: AppRole): string {
   if (role === "admin") return "bg-primary/15 text-primary border-primary/30";
+  if (role === "business")
+    return "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30";
   if (role === "premium")
     return "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30";
   return "bg-muted text-muted-foreground border-border";

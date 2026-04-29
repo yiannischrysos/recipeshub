@@ -12,11 +12,13 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, ChefHat, Search, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, ChefHat, Search, Eye, Pencil, Trash2, Star } from "lucide-react";
 import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { DietaryChips } from "@/components/Chips";
 import { RecipePreview } from "@/components/RecipePreview";
+import { useFavorites } from "@/hooks/use-favorites";
+import { FavoriteStar } from "@/components/FavoriteStar";
 
 export const Route = createFileRoute("/recipes/")({
   component: RecipesIndex,
@@ -41,6 +43,7 @@ function RecipesIndex() {
   const [items, setItems] = useState<RecipeRow[]>([]);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("All");
+  const [favOnly, setFavOnly] = useState(false);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -48,6 +51,7 @@ function RecipesIndex() {
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RecipeRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const favs = useFavorites("recipe");
 
   const removeRecipe = async () => {
     if (!deleteTarget) return;
@@ -105,13 +109,13 @@ function RecipesIndex() {
     const ql = q.toLowerCase();
     return items.filter((r) => {
       if (cat !== "All" && r.category !== cat) return false;
+      if (favOnly && !favs.isFavorite(r.id)) return false;
       if (!ql) return true;
       return r.name.toLowerCase().includes(ql) || (r.family ?? "").toLowerCase().includes(ql);
     });
-  }, [items, q, cat]);
+  }, [items, q, cat, favOnly, favs.ids]);
 
   const families = useMemo(() => {
-    // Group: parent recipe (or self if no parent) -> children
     const byId = new Map(filtered.map((r) => [r.id, r]));
     const groups = new Map<string, { head: RecipeRow; subs: RecipeRow[] }>();
     for (const r of filtered) {
@@ -120,8 +124,15 @@ function RecipesIndex() {
       if (!groups.has(key)) groups.set(key, { head: parent, subs: [] });
       if (r.id !== parent.id) groups.get(key)!.subs.push(r);
     }
-    return Array.from(groups.values());
-  }, [filtered]);
+    const arr = Array.from(groups.values());
+    // Pin favorites to top
+    arr.sort((a, b) => {
+      const af = favs.isFavorite(a.head.id) ? 0 : 1;
+      const bf = favs.isFavorite(b.head.id) ? 0 : 1;
+      return af - bf;
+    });
+    return arr;
+  }, [filtered, favs.ids]);
 
   const categoryCounts = useMemo(() => {
     const map = new Map<string, number>();
@@ -185,9 +196,9 @@ function RecipesIndex() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="mt-6 sticky top-2 z-10">
-        <div className="relative">
+      {/* Search + favorites toggle */}
+      <div className="mt-6 sticky top-2 z-10 flex items-center gap-2">
+        <div className="relative flex-1">
           <Search className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
@@ -196,6 +207,16 @@ function RecipesIndex() {
             className="pl-11 h-12 rounded-full bg-card/90 backdrop-blur shadow-sm"
           />
         </div>
+        <Button
+          type="button"
+          variant={favOnly ? "default" : "outline"}
+          onClick={() => setFavOnly((v) => !v)}
+          className="h-12 rounded-full"
+          title="Show favorites only"
+        >
+          <Star className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`} />
+          <span className="hidden sm:inline ml-1">Favorites</span>
+        </Button>
       </div>
 
       {families.length === 0 ? (
@@ -250,6 +271,11 @@ function RecipesIndex() {
                     <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Suggested</div>
                     <div className="font-display text-lg text-primary">{fmtMoney(price)}</div>
                   </div>
+
+                  <FavoriteStar
+                    active={favs.isFavorite(head.id)}
+                    onToggle={() => favs.toggle(head.id)}
+                  />
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">

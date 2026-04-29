@@ -1,13 +1,14 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { useIsAdmin } from "@/hooks/use-role";
+import { useIsAdmin, useUserRole, roleBadgeClass, roleLabel } from "@/hooks/use-role";
 import { Button } from "@/components/ui/button";
-import { ChefHat, LogOut, User, Shield } from "lucide-react";
+import { ChefHat, LogOut, User, Shield, Star } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { role } = useUserRole();
   const loc = useLocation();
   const nav = useNavigate();
 
@@ -41,8 +42,10 @@ export function AppHeader() {
           <nav className="hidden md:flex items-center gap-1">
             {link("/recipes", "Recipes")}
             {link("/ingredients", "Ingredients")}
+            {link("/favorites", "Favorites")}
             {link("/groups", "Groups")}
             {link("/messages", "Messages")}
+            {link("/pricing", "Pricing")}
             {link("/announcements", "Updates")}
             {link("/profile", "Profile")}
             {isAdmin && link("/admin", "Admin")}
@@ -60,9 +63,14 @@ export function AppHeader() {
                 <User className="h-4 w-4" />
                 {user.email}
               </Link>
-              {isAdmin && (
+              {isAdmin ? (
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium">
                   <Shield className="h-3 w-3" /> Admin
+                </span>
+              ) : (
+                <span className={`hidden sm:inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${roleBadgeClass(role)}`}>
+                  {role === "business" ? <Star className="h-3 w-3" /> : null}
+                  {roleLabel(role)}
                 </span>
               )}
               <Button
@@ -87,8 +95,10 @@ export function AppHeader() {
         <nav className="md:hidden flex items-center gap-1 px-4 pb-3 overflow-x-auto">
           {link("/recipes", "Recipes")}
           {link("/ingredients", "Ingredients")}
+          {link("/favorites", "Favorites")}
           {link("/groups", "Groups")}
           {link("/messages", "Messages")}
+          {link("/pricing", "Pricing")}
           {link("/announcements", "Updates")}
           {link("/profile", "Profile")}
           {isAdmin && link("/admin", "Admin")}
