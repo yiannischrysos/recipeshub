@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as IngredientsRouteImport } from './routes/ingredients'
 import { Route as FavoritesRouteImport } from './routes/favorites'
@@ -31,6 +32,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MessagesRoute = MessagesRouteImport.update({
@@ -97,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
+  '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/groups/$id': typeof GroupsIdRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
+  '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/groups/$id': typeof GroupsIdRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
+  '/pricing': typeof PricingRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/groups/$id': typeof GroupsIdRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/ingredients'
     | '/messages'
+    | '/pricing'
     | '/profile'
     | '/reset-password'
     | '/groups/$id'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/ingredients'
     | '/messages'
+    | '/pricing'
     | '/profile'
     | '/reset-password'
     | '/groups/$id'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/favorites'
     | '/ingredients'
     | '/messages'
+    | '/pricing'
     | '/profile'
     | '/reset-password'
     | '/groups/$id'
@@ -191,6 +203,7 @@ export interface RootRouteChildren {
   FavoritesRoute: typeof FavoritesRoute
   IngredientsRoute: typeof IngredientsRoute
   MessagesRoute: typeof MessagesRoute
+  PricingRoute: typeof PricingRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   GroupsIdRoute: typeof GroupsIdRoute
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/messages': {
@@ -303,6 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   FavoritesRoute: FavoritesRoute,
   IngredientsRoute: IngredientsRoute,
   MessagesRoute: MessagesRoute,
+  PricingRoute: PricingRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   GroupsIdRoute: GroupsIdRoute,
