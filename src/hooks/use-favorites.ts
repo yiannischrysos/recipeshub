@@ -3,14 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
 type Kind = "recipe" | "ingredient";
-const TABLE: Record<Kind, "favorite_recipes" | "favorite_ingredients"> = {
-  recipe: "favorite_recipes",
-  ingredient: "favorite_ingredients",
-};
-const COL: Record<Kind, "recipe_id" | "ingredient_id"> = {
-  recipe: "recipe_id",
-  ingredient: "ingredient_id",
-};
 
 export function useFavorites(kind: Kind) {
   const { user } = useAuth();
@@ -19,8 +11,13 @@ export function useFavorites(kind: Kind) {
 
   const load = useCallback(async () => {
     if (!user) { setIds(new Set()); setLoaded(true); return; }
-    const { data } = await supabase.from(TABLE[kind]).select(COL[kind]).eq("user_id", user.id);
-    setIds(new Set((data ?? []).map((r) => (r as Record<string, string>)[COL[kind]])));
+    if (kind === "recipe") {
+      const { data } = await supabase.from("favorite_recipes").select("recipe_id").eq("user_id", user.id);
+      setIds(new Set((data ?? []).map((r) => r.recipe_id)));
+    } else {
+      const { data } = await supabase.from("favorite_ingredients").select("ingredient_id").eq("user_id", user.id);
+      setIds(new Set((data ?? []).map((r) => r.ingredient_id)));
+    }
     setLoaded(true);
   }, [user, kind]);
 
@@ -29,19 +26,25 @@ export function useFavorites(kind: Kind) {
   const toggle = useCallback(async (targetId: string) => {
     if (!user) return;
     const isFav = ids.has(targetId);
-    // Optimistic
     setIds((prev) => {
       const next = new Set(prev);
       if (isFav) next.delete(targetId); else next.add(targetId);
       return next;
     });
-    if (isFav) {
-      await supabase.from(TABLE[kind]).delete()
-        .eq("user_id", user.id).eq(COL[kind], targetId);
+    if (kind === "recipe") {
+      if (isFav) {
+        await supabase.from("favorite_recipes").delete()
+          .eq("user_id", user.id).eq("recipe_id", targetId);
+      } else {
+        await supabase.from("favorite_recipes").insert({ user_id: user.id, recipe_id: targetId });
+      }
     } else {
-      await supabase.from(TABLE[kind]).insert({
-        user_id: user.id, [COL[kind]]: targetId,
-      } as never);
+      if (isFav) {
+        await supabase.from("favorite_ingredients").delete()
+          .eq("user_id", user.id).eq("ingredient_id", targetId);
+      } else {
+        await supabase.from("favorite_ingredients").insert({ user_id: user.id, ingredient_id: targetId });
+      }
     }
   }, [user, ids, kind]);
 
