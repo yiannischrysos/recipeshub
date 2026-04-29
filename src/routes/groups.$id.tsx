@@ -198,11 +198,16 @@ function GroupDetailPage() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <div className="mx-auto max-w-5xl px-4 py-6">
-        <header className="flex items-center justify-between mb-4">
+        <header className="flex items-center justify-between mb-4 gap-2">
           <div>
             <h1 className="font-display text-2xl">{group.name}</h1>
             {group.description && <p className="text-sm text-muted-foreground">{group.description}</p>}
           </div>
+          {(isOwner || can("can_invite")) && (
+            <Button size="sm" variant="outline" onClick={() => setTab("manage")}>
+              <UserPlus className="h-4 w-4 mr-1" /> Invite
+            </Button>
+          )}
         </header>
 
         <Tabs value={tab} onValueChange={setTab}>
