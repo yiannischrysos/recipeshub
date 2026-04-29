@@ -116,7 +116,6 @@ function RecipesIndex() {
   }, [items, q, cat, favOnly, favs.ids]);
 
   const families = useMemo(() => {
-    // Group: parent recipe (or self if no parent) -> children
     const byId = new Map(filtered.map((r) => [r.id, r]));
     const groups = new Map<string, { head: RecipeRow; subs: RecipeRow[] }>();
     for (const r of filtered) {
@@ -125,8 +124,15 @@ function RecipesIndex() {
       if (!groups.has(key)) groups.set(key, { head: parent, subs: [] });
       if (r.id !== parent.id) groups.get(key)!.subs.push(r);
     }
-    return Array.from(groups.values());
-  }, [filtered]);
+    const arr = Array.from(groups.values());
+    // Pin favorites to top
+    arr.sort((a, b) => {
+      const af = favs.isFavorite(a.head.id) ? 0 : 1;
+      const bf = favs.isFavorite(b.head.id) ? 0 : 1;
+      return af - bf;
+    });
+    return arr;
+  }, [filtered, favs.ids]);
 
   const categoryCounts = useMemo(() => {
     const map = new Map<string, number>();
