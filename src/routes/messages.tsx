@@ -18,6 +18,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { blockUser, getOrCreateConversation, unblockUser } from "@/lib/messaging";
+import { MessageReactions } from "@/components/MessageReactions";
 
 export const Route = createFileRoute("/messages")({
   component: MessagesPage,
