@@ -217,33 +217,68 @@ function GroupDetailPage() {
 
           {/* CHAT */}
           <TabsContent value="chat" className="mt-4">
-            <div className="border border-border rounded-lg bg-card flex flex-col h-[calc(100vh-16rem)]">
-              <ScrollArea className="flex-1">
-                <div ref={scrollRef} className="p-4 space-y-2">
-                  {messages.map((m) => {
-                    const mine = m.sender_id === user.id;
-                    const p = profiles[m.sender_id];
-                    return (
-                      <div key={m.id} className={`flex gap-2 ${mine ? "justify-end" : "justify-start"}`}>
-                        {!mine && (
-                          <Avatar className="h-7 w-7">
-                            {p?.avatar_url ? <AvatarImage src={p.avatar_url} /> :
-                             p?.avatar_icon ? <ChefAvatar icon={p.avatar_icon} className="h-7 w-7" /> :
-                             <AvatarFallback>{nameOf(p)[0]?.toUpperCase()}</AvatarFallback>}
-                          </Avatar>
-                        )}
-                        <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-                          {!mine && <div className="text-[10px] font-semibold opacity-80 mb-0.5">{nameOf(p)}</div>}
-                          <div className="whitespace-pre-wrap break-words">{renderMentions(m.content ?? "", members, profiles, user.id)}</div>
-                          <div className={`text-[10px] mt-1 ${mine ? "opacity-70" : "text-muted-foreground"}`}>
-                            {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </div>
+            <div className="border border-border rounded-lg bg-card flex flex-col h-[calc(100vh-16rem)] relative">
+              <div
+                ref={scrollRef}
+                onScroll={onScroll}
+                className="flex-1 overflow-y-auto p-4 space-y-2"
+              >
+                {messages.map((m) => {
+                  const mine = m.sender_id === user.id;
+                  const p = profiles[m.sender_id];
+                  const mentionsMe = !!user && m.mentions?.includes(user.id);
+                  return (
+                    <div
+                      key={m.id}
+                      ref={(el) => { messageRefs.current[m.id] = el; }}
+                      className={`flex gap-2 ${mine ? "justify-end" : "justify-start"}`}
+                    >
+                      {!mine && (
+                        <Avatar className="h-7 w-7">
+                          {p?.avatar_url ? <AvatarImage src={p.avatar_url} /> :
+                           p?.avatar_icon ? <ChefAvatar icon={p.avatar_icon} className="h-7 w-7" /> :
+                           <AvatarFallback>{nameOf(p)[0]?.toUpperCase()}</AvatarFallback>}
+                        </Avatar>
+                      )}
+                      <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                        mine
+                          ? "bg-primary text-primary-foreground"
+                          : mentionsMe
+                            ? "bg-amber-100 dark:bg-amber-900/30 ring-1 ring-amber-400/40"
+                            : "bg-secondary"
+                      }`}>
+                        {!mine && <div className="text-[10px] font-semibold opacity-80 mb-0.5">{nameOf(p)}</div>}
+                        <div className="whitespace-pre-wrap break-words">{renderMentions(m.content ?? "", members, profiles, user.id)}</div>
+                        <div className={`text-[10px] mt-1 ${mine ? "opacity-70" : "text-muted-foreground"}`}>
+                          {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </div>
+                        <MessageReactions messageId={m.id} userId={user.id} scope="group" />
                       </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Floating action buttons */}
+              {pendingMentions.length > 0 && (
+                <button
+                  onClick={jumpToLatestMention}
+                  className="absolute right-4 bottom-24 rounded-full shadow-lg bg-amber-500 text-white px-3 h-9 flex items-center gap-1.5 text-xs font-medium hover:bg-amber-600 transition"
+                  title="Jump to mention"
+                >
+                  <Bell className="h-3.5 w-3.5" />
+                  {pendingMentions.length} mention{pendingMentions.length === 1 ? "" : "s"}
+                </button>
+              )}
+              {showJumpDown && (
+                <button
+                  onClick={jumpToBottom}
+                  className="absolute right-4 bottom-20 h-9 w-9 rounded-full shadow-lg bg-card border border-border grid place-items-center hover:bg-secondary transition"
+                  title="Scroll to latest"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              )}
 
               <div className="p-3 border-t border-border relative">
                 {mentionOpen && filteredMentions.length > 0 && (
