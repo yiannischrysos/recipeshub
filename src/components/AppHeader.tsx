@@ -95,8 +95,10 @@ export function AppHeader() {
         <nav className="md:hidden flex items-center gap-1 px-4 pb-3 overflow-x-auto">
           {link("/recipes", "Recipes")}
           {link("/ingredients", "Ingredients")}
+          {link("/favorites", "Favorites")}
           {link("/groups", "Groups")}
           {link("/messages", "Messages")}
+          {link("/pricing", "Pricing")}
           {link("/announcements", "Updates")}
           {link("/profile", "Profile")}
           {isAdmin && link("/admin", "Admin")}
