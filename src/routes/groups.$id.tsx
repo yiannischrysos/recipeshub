@@ -14,9 +14,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Send, Settings, Users, StickyNote, Pin, Trash2, UserPlus, Crown, Shield, AtSign, Plus,
+  Send, Settings, Users, StickyNote, Pin, Trash2, UserPlus, Crown, Shield, AtSign, Plus, ChevronDown, Bell,
 } from "lucide-react";
 import { toast } from "sonner";
+import { MessageReactions } from "@/components/MessageReactions";
 
 export const Route = createFileRoute("/groups/$id")({
   component: GroupDetailPage,
