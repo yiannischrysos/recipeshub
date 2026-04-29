@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
-export type AppRole = "admin" | "premium" | "free" | "user";
+export type AppRole = "admin" | "business" | "premium" | "free" | "user";
 
 export function useIsAdmin() {
   const { user } = useAuth();
