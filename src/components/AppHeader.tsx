@@ -8,6 +8,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 export function AppHeader() {
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
+  const { role } = useUserRole();
   const loc = useLocation();
   const nav = useNavigate();
 
