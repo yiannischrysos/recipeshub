@@ -272,6 +272,11 @@ function RecipesIndex() {
                     <div className="font-display text-lg text-primary">{fmtMoney(price)}</div>
                   </div>
 
+                  <FavoriteStar
+                    active={favs.isFavorite(head.id)}
+                    onToggle={() => favs.toggle(head.id)}
+                  />
+
                   {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100 transition-opacity">
                     <Button
