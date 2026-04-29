@@ -59,10 +59,17 @@ function IngredientsPage() {
   };
   useEffect(() => { if (user) load(); }, [user]);
 
-  const filtered = useMemo(
-    () => items.filter((i) => i.name.toLowerCase().includes(q.toLowerCase())),
-    [items, q],
-  );
+  const filtered = useMemo(() => {
+    return items
+      .filter((i) => i.name.toLowerCase().includes(q.toLowerCase()))
+      .filter((i) => (favOnly ? favs.isFavorite(i.id) : true))
+      .sort((a, b) => {
+        const af = favs.isFavorite(a.id) ? 0 : 1;
+        const bf = favs.isFavorite(b.id) ? 0 : 1;
+        if (af !== bf) return af - bf;
+        return a.name.localeCompare(b.name);
+      });
+  }, [items, q, favOnly, favs.ids]);
 
   const remove = async (id: string) => {
     if (!confirm("Delete this ingredient? Recipes using it will block deletion.")) return;
