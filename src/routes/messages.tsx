@@ -372,7 +372,35 @@ function MessagesPage() {
 
                 <ScrollArea className="flex-1">
                   <div ref={scrollRef} className="p-4 space-y-2">
-                    {messages.map((m) => {
+                    {messages.length === 0 ? (
+                      <div className="grid place-items-center py-12 text-center">
+                        <div className="max-w-sm">
+                          <div className="font-medium mb-1">No messages yet</div>
+                          <p className="text-sm text-muted-foreground">
+                            You don't have any previous messages with{" "}
+                            <strong>{nameOf(otherProfile)}</strong>. Want to start a
+                            new conversation?
+                          </p>
+                          {canSend && (
+                            <Button
+                              size="sm"
+                              className="mt-3"
+                              onClick={() => {
+                                if (!input.trim()) setInput("Hi 👋");
+                                setTimeout(() => {
+                                  document
+                                    .querySelector<HTMLInputElement>('input[placeholder^="Type a message"]')
+                                    ?.focus();
+                                }, 0);
+                              }}
+                            >
+                              Say hi
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      messages.map((m) => {
                       const mine = m.sender_id === user.id;
                       const recipe = m.shared_recipe_id
                         ? recipes.find((r) => r.id === m.shared_recipe_id)
@@ -411,10 +439,12 @@ function MessagesPage() {
                                 minute: "2-digit",
                               })}
                             </div>
+                            <MessageReactions messageId={m.id} userId={user.id} />
                           </div>
                         </div>
                       );
-                    })}
+                    })
+                    )}
                   </div>
                 </ScrollArea>
 
