@@ -1,8 +1,8 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
-import { useIsAdmin } from "@/hooks/use-role";
+import { useIsAdmin, useUserRole, roleBadgeClass, roleLabel } from "@/hooks/use-role";
 import { Button } from "@/components/ui/button";
-import { ChefHat, LogOut, User, Shield } from "lucide-react";
+import { ChefHat, LogOut, User, Shield, Star } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 
 export function AppHeader() {

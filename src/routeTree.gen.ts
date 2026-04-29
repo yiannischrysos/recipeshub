@@ -13,6 +13,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as IngredientsRouteImport } from './routes/ingredients'
+import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -40,6 +41,11 @@ const MessagesRoute = MessagesRouteImport.update({
 const IngredientsRoute = IngredientsRouteImport.update({
   id: '/ingredients',
   path: '/ingredients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritesRoute = FavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/announcements': typeof AnnouncementsRoute
   '/auth': typeof AuthRoute
+  '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/announcements': typeof AnnouncementsRoute
   '/auth': typeof AuthRoute
+  '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/announcements': typeof AnnouncementsRoute
   '/auth': typeof AuthRoute
+  '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
   '/profile': typeof ProfileRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/announcements'
     | '/auth'
+    | '/favorites'
     | '/ingredients'
     | '/messages'
     | '/profile'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/announcements'
     | '/auth'
+    | '/favorites'
     | '/ingredients'
     | '/messages'
     | '/profile'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/announcements'
     | '/auth'
+    | '/favorites'
     | '/ingredients'
     | '/messages'
     | '/profile'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AnnouncementsRoute: typeof AnnouncementsRoute
   AuthRoute: typeof AuthRoute
+  FavoritesRoute: typeof FavoritesRoute
   IngredientsRoute: typeof IngredientsRoute
   MessagesRoute: typeof MessagesRoute
   ProfileRoute: typeof ProfileRoute
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       path: '/ingredients'
       fullPath: '/ingredients'
       preLoaderRoute: typeof IngredientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favorites': {
+      id: '/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof FavoritesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AnnouncementsRoute: AnnouncementsRoute,
   AuthRoute: AuthRoute,
+  FavoritesRoute: FavoritesRoute,
   IngredientsRoute: IngredientsRoute,
   MessagesRoute: MessagesRoute,
   ProfileRoute: ProfileRoute,
