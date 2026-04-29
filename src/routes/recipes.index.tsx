@@ -109,10 +109,11 @@ function RecipesIndex() {
     const ql = q.toLowerCase();
     return items.filter((r) => {
       if (cat !== "All" && r.category !== cat) return false;
+      if (favOnly && !favs.isFavorite(r.id)) return false;
       if (!ql) return true;
       return r.name.toLowerCase().includes(ql) || (r.family ?? "").toLowerCase().includes(ql);
     });
-  }, [items, q, cat]);
+  }, [items, q, cat, favOnly, favs.ids]);
 
   const families = useMemo(() => {
     // Group: parent recipe (or self if no parent) -> children
