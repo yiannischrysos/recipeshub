@@ -196,9 +196,9 @@ function RecipesIndex() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="mt-6 sticky top-2 z-10">
-        <div className="relative">
+      {/* Search + favorites toggle */}
+      <div className="mt-6 sticky top-2 z-10 flex items-center gap-2">
+        <div className="relative flex-1">
           <Search className="h-4 w-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={q}
@@ -207,6 +207,16 @@ function RecipesIndex() {
             className="pl-11 h-12 rounded-full bg-card/90 backdrop-blur shadow-sm"
           />
         </div>
+        <Button
+          type="button"
+          variant={favOnly ? "default" : "outline"}
+          onClick={() => setFavOnly((v) => !v)}
+          className="h-12 rounded-full"
+          title="Show favorites only"
+        >
+          <Star className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`} />
+          <span className="hidden sm:inline ml-1">Favorites</span>
+        </Button>
       </div>
 
       {families.length === 0 ? (
