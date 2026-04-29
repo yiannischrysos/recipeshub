@@ -51,8 +51,11 @@ function GroupDetailPage() {
   const [tab, setTab] = useState("chat");
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
+  const [showJumpDown, setShowJumpDown] = useState(false);
+  const [pendingMentions, setPendingMentions] = useState<string[]>([]); // message ids that mention me & are off-screen
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [loading, user, nav]);
 
