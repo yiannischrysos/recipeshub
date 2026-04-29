@@ -106,7 +106,43 @@ function GroupDetailPage() {
     return () => { supabase.removeChannel(ch); };
   }, [user, groupId]);
 
-  useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }); }, [messages.length, tab]);
+  // Auto-scroll only if user is near the bottom; otherwise mark mention as pending
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    if (nearBottom) {
+      el.scrollTo({ top: el.scrollHeight });
+    } else if (messages.length && user) {
+      const last = messages[messages.length - 1];
+      if (last.mentions?.includes(user.id) && last.sender_id !== user.id) {
+        setPendingMentions((p) => (p.includes(last.id) ? p : [...p, last.id]));
+      }
+    }
+  }, [messages.length, tab, user]);
+
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowJumpDown(distance > 120);
+    if (distance < 60) setPendingMentions([]);
+  };
+
+  const jumpToBottom = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    setPendingMentions([]);
+  };
+
+  const jumpToLatestMention = () => {
+    const id = pendingMentions[pendingMentions.length - 1];
+    if (!id) return;
+    const node = messageRefs.current[id];
+    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setPendingMentions((p) => p.filter((x) => x !== id));
+  };
 
   // Detect @mention typing
   const onInputChange = (v: string) => {
