@@ -96,9 +96,20 @@ function IngredientsPage() {
         </Dialog>
       </div>
 
-      <div className="mt-6 relative">
-        <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ingredients…" className="pl-9 max-w-sm" />
+      <div className="mt-6 flex items-center gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ingredients…" className="pl-9" />
+        </div>
+        <Button
+          type="button"
+          variant={favOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFavOnly((v) => !v)}
+        >
+          <Star className={`h-4 w-4 ${favOnly ? "fill-current" : ""}`} />
+          <span className="hidden sm:inline ml-1">Favorites</span>
+        </Button>
       </div>
 
       <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
