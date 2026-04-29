@@ -136,6 +136,7 @@ function IngredientsPage() {
                   {i.supplier && <div className="text-xs text-muted-foreground">{i.supplier}</div>}
                 </div>
                 <div className="flex gap-1">
+                  <FavoriteStar active={favs.isFavorite(i.id)} onToggle={() => favs.toggle(i.id)} />
                   <Button size="icon" variant="ghost" onClick={() => { setEditing(i); setOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                   <Button size="icon" variant="ghost" onClick={() => remove(i.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
