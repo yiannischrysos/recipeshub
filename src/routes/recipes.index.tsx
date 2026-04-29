@@ -43,6 +43,7 @@ function RecipesIndex() {
   const [items, setItems] = useState<RecipeRow[]>([]);
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("All");
+  const [favOnly, setFavOnly] = useState(false);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -50,6 +51,7 @@ function RecipesIndex() {
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RecipeRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const favs = useFavorites("recipe");
 
   const removeRecipe = async () => {
     if (!deleteTarget) return;
