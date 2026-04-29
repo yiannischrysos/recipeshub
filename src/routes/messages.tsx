@@ -440,7 +440,7 @@ function MessagesPage() {
                                 minute: "2-digit",
                               })}
                             </div>
-                            <MessageReactions messageId={m.id} userId={user.id} />
+                            <MessageReactions messageId={m.id} userId={user.id} scope="dm" />
                           </div>
                         </div>
                       );
