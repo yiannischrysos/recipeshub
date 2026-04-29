@@ -95,6 +95,48 @@ export type Database = {
         }
         Relationships: []
       }
+      favorite_ingredients: {
+        Row: {
+          created_at: string
+          id: string
+          ingredient_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ingredient_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ingredient_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      favorite_recipes: {
+        Row: {
+          created_at: string
+          id: string
+          recipe_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recipe_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recipe_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -164,6 +206,36 @@ export type Database = {
         }
         Relationships: []
       }
+      group_invites: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          invitee_id: string
+          inviter_id: string
+          status: Database["public"]["Enums"]["invite_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          invitee_id: string
+          inviter_id: string
+          status?: Database["public"]["Enums"]["invite_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          invitee_id?: string
+          inviter_id?: string
+          status?: Database["public"]["Enums"]["invite_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string
@@ -202,6 +274,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      group_message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       group_messages: {
         Row: {
@@ -416,6 +512,30 @@ export type Database = {
           supplier?: string | null
           unit?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
           user_id?: string
         }
         Relationships: []
@@ -761,9 +881,10 @@ export type Database = {
       is_group_owner: { Args: { _gid: string; _uid: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user" | "free" | "premium"
+      app_role: "admin" | "user" | "free" | "premium" | "business"
       conversation_status: "pending" | "accepted" | "declined"
       friend_request_status: "pending" | "accepted" | "declined"
+      invite_status: "pending" | "accepted" | "declined"
       notif_type:
         | "mention"
         | "friend_request"
@@ -899,9 +1020,10 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "free", "premium"],
+      app_role: ["admin", "user", "free", "premium", "business"],
       conversation_status: ["pending", "accepted", "declined"],
       friend_request_status: ["pending", "accepted", "declined"],
+      invite_status: ["pending", "accepted", "declined"],
       notif_type: [
         "mention",
         "friend_request",
