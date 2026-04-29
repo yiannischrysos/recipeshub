@@ -63,9 +63,14 @@ export function AppHeader() {
                 <User className="h-4 w-4" />
                 {user.email}
               </Link>
-              {isAdmin && (
+              {isAdmin ? (
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium">
                   <Shield className="h-3 w-3" /> Admin
+                </span>
+              ) : (
+                <span className={`hidden sm:inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${roleBadgeClass(role)}`}>
+                  {role === "business" ? <Star className="h-3 w-3" /> : null}
+                  {roleLabel(role)}
                 </span>
               )}
               <Button
