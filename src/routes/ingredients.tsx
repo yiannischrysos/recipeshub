@@ -45,8 +45,10 @@ function IngredientsPage() {
   const nav = useNavigate();
   const [items, setItems] = useState<Ingredient[]>([]);
   const [q, setQ] = useState("");
+  const [favOnly, setFavOnly] = useState(false);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Ingredient | null>(null);
+  const favs = useFavorites("ingredient");
 
   useEffect(() => { if (!loading && !user) nav({ to: "/auth" }); }, [loading, user, nav]);
 
