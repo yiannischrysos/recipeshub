@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { fmtMoney } from "@/lib/format";
 import { ALLERGENS, DIETARY, ALLERGEN_EMOJI, DIETARY_EMOJI } from "@/lib/taxonomy";
 import { AllergenChips, DietaryChips } from "@/components/Chips";
+import { useFavorites } from "@/hooks/use-favorites";
+import { FavoriteStar } from "@/components/FavoriteStar";
 
 export const Route = createFileRoute("/ingredients")({
   component: IngredientsPage,
