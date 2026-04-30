@@ -39,6 +39,10 @@ type Profile = {
   bio_note: string | null;
   avatar_url: string | null;
   avatar_icon: string | null;
+  gender: string | null;
+  show_gender: boolean | null;
+  birth_date: string | null;
+  show_age: boolean | null;
 };
 
 type Presence = { is_online: boolean; last_seen_at: string };
