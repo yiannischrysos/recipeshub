@@ -115,6 +115,35 @@ function AuthPage() {
               </div>
             </TabsContent>
 
+            <TabsContent value="signup" className="space-y-4 m-0">
+              <div className="space-y-2">
+                <Label>Gender (optional)</Label>
+                <Select value={gender} onValueChange={(v) => setGender(v as typeof gender)}>
+                  <SelectTrigger><SelectValue placeholder="Prefer not to say" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="non_binary">Non-binary</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="prefer_not">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                  <span>Show gender on my profile</span>
+                  <Switch checked={showGender} onCheckedChange={setShowGender} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bday">Date of birth</Label>
+                <Input id="bday" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                  <span>Show my age on my profile</span>
+                  <Switch checked={showAge} onCheckedChange={setShowAge} />
+                </div>
+                <p className="text-[11px] text-muted-foreground">Used for account security. Never shown unless you opt in.</p>
+              </div>
+            </TabsContent>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
