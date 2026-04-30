@@ -5,10 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChefAvatar } from "@/components/ChefAvatar";
-import { Send, Ban, ShieldOff, Check, X, ChefHat, MessageSquarePlus } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Send, Ban, ShieldOff, Check, X, ChefHat, MessageSquarePlus, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
