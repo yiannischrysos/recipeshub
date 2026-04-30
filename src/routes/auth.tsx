@@ -62,9 +62,18 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        // Supabase returns a user with empty identities array if email already exists
         if (data.user && data.user.identities && data.user.identities.length === 0) {
           throw new Error("An account with this email already exists. Please sign in instead.");
+        }
+        // Persist optional gender / birth_date with their privacy toggles
+        if (data.user && (gender || birthDate || showGender || showAge)) {
+          await supabase.from("profiles").upsert({
+            id: data.user.id,
+            gender: gender || null,
+            show_gender: showGender,
+            birth_date: birthDate || null,
+            show_age: showAge,
+          }, { onConflict: "id" });
         }
         toast.success("Account created. You can sign in now.");
         setMode("signin");
