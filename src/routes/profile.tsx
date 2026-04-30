@@ -220,6 +220,16 @@ function OwnProfile() {
           <p className="text-sm text-muted-foreground mt-1">
             {presence?.is_online ? "🟢 Online now" : presence ? lastSeenLabel(false, presence.last_seen_at) : "—"}
           </p>
+          {(profile?.show_gender && profile?.gender) || (profile?.show_age && profile?.birth_date) ? (
+            <div className="flex flex-wrap gap-2 mt-2 text-xs">
+              {profile?.show_gender && profile?.gender && (
+                <span className="rounded-full bg-secondary px-2 py-0.5">{GENDER_LABELS[profile.gender] ?? profile.gender}</span>
+              )}
+              {profile?.show_age && profile?.birth_date && calculateAge(profile.birth_date) !== null && (
+                <span className="rounded-full bg-secondary px-2 py-0.5">{calculateAge(profile.birth_date)} yrs</span>
+              )}
+            </div>
+          ) : null}
           <div className="flex flex-wrap gap-2 mt-3">
             <StatPill label="Followers" value={counts.followers} />
             <StatPill label="Following" value={counts.following} />
