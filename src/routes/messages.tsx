@@ -263,8 +263,14 @@ function MessagesPage() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <div className="mx-auto max-w-6xl px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[calc(100vh-10rem)]">
+      <div className="mx-auto max-w-6xl px-4 py-6 space-y-4">
+        <Tabs defaultValue="direct">
+          <TabsList>
+            <TabsTrigger value="direct">Direct</TabsTrigger>
+            <TabsTrigger value="groups">Groups</TabsTrigger>
+          </TabsList>
+          <TabsContent value="direct" className="mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[calc(100vh-12rem)]">
           {/* Sidebar */}
           <div className="border border-border rounded-lg bg-card flex flex-col">
             <div className="p-3 border-b border-border flex items-center justify-between">
