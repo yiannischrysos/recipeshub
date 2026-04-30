@@ -626,36 +626,48 @@ export type Database = {
           avatar_icon: string | null
           avatar_url: string | null
           bio_note: string | null
+          birth_date: string | null
           created_at: string
           currency: string
           default_margin_pct: number
           display_name: string | null
+          gender: string | null
           id: string
           nickname: string | null
+          show_age: boolean
+          show_gender: boolean
           updated_at: string
         }
         Insert: {
           avatar_icon?: string | null
           avatar_url?: string | null
           bio_note?: string | null
+          birth_date?: string | null
           created_at?: string
           currency?: string
           default_margin_pct?: number
           display_name?: string | null
+          gender?: string | null
           id: string
           nickname?: string | null
+          show_age?: boolean
+          show_gender?: boolean
           updated_at?: string
         }
         Update: {
           avatar_icon?: string | null
           avatar_url?: string | null
           bio_note?: string | null
+          birth_date?: string | null
           created_at?: string
           currency?: string
           default_margin_pct?: number
           display_name?: string | null
+          gender?: string | null
           id?: string
           nickname?: string | null
+          show_age?: boolean
+          show_gender?: boolean
           updated_at?: string
         }
         Relationships: []
