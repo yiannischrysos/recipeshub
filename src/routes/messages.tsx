@@ -5,10 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChefAvatar } from "@/components/ChefAvatar";
-import { Send, Ban, ShieldOff, Check, X, ChefHat, MessageSquarePlus } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Send, Ban, ShieldOff, Check, X, ChefHat, MessageSquarePlus, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -261,8 +263,14 @@ function MessagesPage() {
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
-      <div className="mx-auto max-w-6xl px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[calc(100vh-10rem)]">
+      <div className="mx-auto max-w-6xl px-4 py-6 space-y-4">
+        <Tabs defaultValue="direct">
+          <TabsList>
+            <TabsTrigger value="direct">Direct</TabsTrigger>
+            <TabsTrigger value="groups">Groups</TabsTrigger>
+          </TabsList>
+          <TabsContent value="direct" className="mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[calc(100vh-12rem)]">
           {/* Sidebar */}
           <div className="border border-border rounded-lg bg-card flex flex-col">
             <div className="p-3 border-b border-border flex items-center justify-between">
@@ -516,6 +524,11 @@ function MessagesPage() {
             )}
           </div>
         </div>
+          </TabsContent>
+          <TabsContent value="groups" className="mt-4">
+            <GroupsPanel />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Dialog open={newChatOpen} onOpenChange={setNewChatOpen}>
@@ -551,6 +564,73 @@ function MessagesPage() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ============= GROUPS PANEL =============
+type GroupRow = { id: string; name: string; description: string | null; updated_at: string };
+
+function GroupsPanel() {
+  const { user } = useAuth();
+  const nav = useNavigate();
+  const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+
+  const load = async () => {
+    if (!user) return;
+    const { data: mems } = await supabase.from("group_members").select("group_id").eq("user_id", user.id);
+    const ids = (mems ?? []).map((m) => m.group_id);
+    if (ids.length === 0) { setGroups([]); return; }
+    const { data } = await supabase.from("groups").select("id,name,description,updated_at").in("id", ids).order("updated_at", { ascending: false });
+    setGroups((data ?? []) as GroupRow[]);
+  };
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user]);
+
+  const create = async () => {
+    if (!user || !name.trim()) return;
+    const { data, error } = await supabase.from("groups").insert({
+      name: name.trim(), description: desc.trim() || null, owner_id: user.id,
+    }).select("id").single();
+    if (error) return toast.error(error.message);
+    toast.success("Group created");
+    setOpen(false); setName(""); setDesc("");
+    nav({ to: "/groups/$id", params: { id: data.id } });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Your groups</h2>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> New group</Button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Create a group</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Group name" />
+              <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description (optional)" rows={3} />
+              <Button onClick={create} className="w-full">Create</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+      {groups.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border p-12 text-center text-muted-foreground">
+          You're not in any groups yet. Create one to get started.
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {groups.map((g) => (
+            <Link key={g.id} to="/groups/$id" params={{ id: g.id }} className="block rounded-xl border border-border bg-card p-4 hover:bg-secondary/50 transition-colors">
+              <div className="font-semibold">{g.name}</div>
+              {g.description && <div className="text-sm text-muted-foreground line-clamp-2 mt-1">{g.description}</div>}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

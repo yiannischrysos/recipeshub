@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -18,6 +20,7 @@ import { getOrCreateConversation } from "@/lib/messaging";
 import { ChefAvatar } from "@/components/ChefAvatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { lastSeenLabel } from "@/lib/relative-time";
+import { calculateAge, GENDER_LABELS } from "@/lib/age";
 import type { ChefIcon } from "@/lib/avatars";
 
 type SearchParams = { u?: string };
@@ -36,6 +39,10 @@ type Profile = {
   bio_note: string | null;
   avatar_url: string | null;
   avatar_icon: string | null;
+  gender: string | null;
+  show_gender: boolean | null;
+  birth_date: string | null;
+  show_age: boolean | null;
 };
 
 type Presence = { is_online: boolean; last_seen_at: string };
@@ -104,6 +111,10 @@ function OwnProfile() {
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [avatarIcon, setAvatarIcon] = useState<ChefIcon>("chef_male");
+  const [gender, setGender] = useState<string>("");
+  const [showGender, setShowGender] = useState(false);
+  const [birthDate, setBirthDate] = useState("");
+  const [showAge, setShowAge] = useState(false);
   const [email, setEmail] = useState(user!.email ?? "");
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
@@ -115,7 +126,7 @@ function OwnProfile() {
   const load = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id,display_name,nickname,bio_note,avatar_url,avatar_icon")
+      .select("id,display_name,nickname,bio_note,avatar_url,avatar_icon,gender,show_gender,birth_date,show_age")
       .eq("id", user!.id)
       .maybeSingle();
     if (data) {
@@ -123,6 +134,10 @@ function OwnProfile() {
       setNickname(data.nickname ?? "");
       setBio(data.bio_note ?? "");
       setAvatarIcon(data.avatar_icon === "chef_female" ? "chef_female" : "chef_male");
+      setGender(data.gender ?? "");
+      setShowGender(!!data.show_gender);
+      setBirthDate(data.birth_date ?? "");
+      setShowAge(!!data.show_age);
     }
     const { data: pres } = await supabase
       .from("user_presence").select("is_online,last_seen_at").eq("user_id", user!.id).maybeSingle();
@@ -139,6 +154,10 @@ function OwnProfile() {
         nickname: nickname.trim() || null,
         bio_note: bio.trim() || null,
         avatar_icon: avatarIcon,
+        gender: gender || null,
+        show_gender: showGender,
+        birth_date: birthDate || null,
+        show_age: showAge,
       })
       .eq("id", user!.id);
     setBusy(false);
@@ -201,6 +220,16 @@ function OwnProfile() {
           <p className="text-sm text-muted-foreground mt-1">
             {presence?.is_online ? "🟢 Online now" : presence ? lastSeenLabel(false, presence.last_seen_at) : "—"}
           </p>
+          {(profile?.show_gender && profile?.gender) || (profile?.show_age && profile?.birth_date) ? (
+            <div className="flex flex-wrap gap-2 mt-2 text-xs">
+              {profile?.show_gender && profile?.gender && (
+                <span className="rounded-full bg-secondary px-2 py-0.5">{GENDER_LABELS[profile.gender] ?? profile.gender}</span>
+              )}
+              {profile?.show_age && profile?.birth_date && calculateAge(profile.birth_date) !== null && (
+                <span className="rounded-full bg-secondary px-2 py-0.5">{calculateAge(profile.birth_date)} yrs</span>
+              )}
+            </div>
+          ) : null}
           <div className="flex flex-wrap gap-2 mt-3">
             <StatPill label="Followers" value={counts.followers} />
             <StatPill label="Following" value={counts.following} />
@@ -238,6 +267,34 @@ function OwnProfile() {
           <div className="space-y-2">
             <Label htmlFor="bio">Public note</Label>
             <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={4} maxLength={500} placeholder="A short note other users will see on your profile" />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Gender</Label>
+              <Select value={gender || "unset"} onValueChange={(v) => setGender(v === "unset" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Not set" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unset">Not set</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="non_binary">Non-binary</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer_not">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Show on profile</span>
+                <Switch checked={showGender} onCheckedChange={setShowGender} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="own-bday">Date of birth</Label>
+              <Input id="own-bday" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Show my age</span>
+                <Switch checked={showAge} onCheckedChange={setShowAge} />
+              </div>
+            </div>
           </div>
           <Button onClick={saveProfile} disabled={busy}>Save profile</Button>
         </TabsContent>
@@ -301,7 +358,7 @@ function OtherProfile({ userId }: { userId: string }) {
 
   const load = async () => {
     const { data: p } = await supabase
-      .from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon").eq("id", userId).maybeSingle();
+      .from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon,gender,show_gender,birth_date,show_age").eq("id", userId).maybeSingle();
     setProfile(p as Profile | null);
     const { data: pres } = await supabase.from("user_presence").select("is_online,last_seen_at").eq("user_id", userId).maybeSingle();
     setPresence(pres as Presence | null);
@@ -392,6 +449,16 @@ function OtherProfile({ userId }: { userId: string }) {
           <p className="text-sm text-muted-foreground mt-1">
             {presence?.is_online ? "🟢 Online now" : lastSeenLabel(false, presence?.last_seen_at)}
           </p>
+          {(profile.show_gender && profile.gender) || (profile.show_age && profile.birth_date) ? (
+            <div className="flex flex-wrap gap-2 mt-2 text-xs">
+              {profile.show_gender && profile.gender && (
+                <span className="rounded-full bg-secondary px-2 py-0.5">{GENDER_LABELS[profile.gender] ?? profile.gender}</span>
+              )}
+              {profile.show_age && profile.birth_date && calculateAge(profile.birth_date) !== null && (
+                <span className="rounded-full bg-secondary px-2 py-0.5">{calculateAge(profile.birth_date)} yrs</span>
+              )}
+            </div>
+          ) : null}
           <div className="flex flex-wrap gap-2 mt-3">
             <StatPill label="Followers" value={counts.followers} />
             <StatPill label="Following" value={counts.following} />

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -22,6 +24,10 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [gender, setGender] = useState<"" | "male" | "female" | "non_binary" | "other" | "prefer_not">("");
+  const [showGender, setShowGender] = useState(false);
+  const [birthDate, setBirthDate] = useState("");
+  const [showAge, setShowAge] = useState(false);
   const [busy, setBusy] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -58,9 +64,18 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        // Supabase returns a user with empty identities array if email already exists
         if (data.user && data.user.identities && data.user.identities.length === 0) {
           throw new Error("An account with this email already exists. Please sign in instead.");
+        }
+        // Persist optional gender / birth_date with their privacy toggles
+        if (data.user && (gender || birthDate || showGender || showAge)) {
+          await supabase.from("profiles").upsert({
+            id: data.user.id,
+            gender: gender || null,
+            show_gender: showGender,
+            birth_date: birthDate || null,
+            show_age: showAge,
+          }, { onConflict: "id" });
         }
         toast.success("Account created. You can sign in now.");
         setMode("signin");
@@ -97,6 +112,32 @@ function AuthPage() {
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Chef Antoine" />
+              </div>
+              <div className="space-y-2">
+                <Label>Gender (optional)</Label>
+                <Select value={gender} onValueChange={(v) => setGender(v as typeof gender)}>
+                  <SelectTrigger><SelectValue placeholder="Prefer not to say" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="non_binary">Non-binary</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="prefer_not">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                  <span>Show gender on my profile</span>
+                  <Switch checked={showGender} onCheckedChange={setShowGender} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bday">Date of birth</Label>
+                <Input id="bday" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                  <span>Show my age on my profile</span>
+                  <Switch checked={showAge} onCheckedChange={setShowAge} />
+                </div>
+                <p className="text-[11px] text-muted-foreground">Used for account security. Never shown unless you opt in.</p>
               </div>
             </TabsContent>
 
