@@ -258,6 +258,34 @@ function OwnProfile() {
             <Label htmlFor="bio">Public note</Label>
             <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={4} maxLength={500} placeholder="A short note other users will see on your profile" />
           </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Gender</Label>
+              <Select value={gender || "unset"} onValueChange={(v) => setGender(v === "unset" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Not set" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unset">Not set</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="non_binary">Non-binary</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="prefer_not">Prefer not to say</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Show on profile</span>
+                <Switch checked={showGender} onCheckedChange={setShowGender} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="own-bday">Date of birth</Label>
+              <Input id="own-bday" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Show my age</span>
+                <Switch checked={showAge} onCheckedChange={setShowAge} />
+              </div>
+            </div>
+          </div>
           <Button onClick={saveProfile} disabled={busy}>Save profile</Button>
         </TabsContent>
 
