@@ -22,6 +22,10 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [gender, setGender] = useState<"" | "male" | "female" | "non_binary" | "other" | "prefer_not">("");
+  const [showGender, setShowGender] = useState(false);
+  const [birthDate, setBirthDate] = useState("");
+  const [showAge, setShowAge] = useState(false);
   const [busy, setBusy] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
