@@ -348,7 +348,7 @@ function OtherProfile({ userId }: { userId: string }) {
 
   const load = async () => {
     const { data: p } = await supabase
-      .from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon").eq("id", userId).maybeSingle();
+      .from("profiles").select("id,display_name,nickname,bio_note,avatar_url,avatar_icon,gender,show_gender,birth_date,show_age").eq("id", userId).maybeSingle();
     setProfile(p as Profile | null);
     const { data: pres } = await supabase.from("user_presence").select("is_online,last_seen_at").eq("user_id", userId).maybeSingle();
     setPresence(pres as Presence | null);
