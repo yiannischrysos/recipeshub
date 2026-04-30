@@ -128,8 +128,8 @@ export function NotificationBell() {
           )}
         </ScrollArea>
         <div className="border-t border-border px-3 py-2 text-center">
-          <Link to={"/announcements" as any} onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">
-            View all announcements
+          <Link to={"/announcements" as any} onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            <Megaphone className="h-3 w-3" /> View all product updates
           </Link>
         </div>
       </PopoverContent>
