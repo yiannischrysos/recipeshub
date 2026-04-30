@@ -113,9 +113,6 @@ function AuthPage() {
                 <Label htmlFor="name">Name</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Chef Antoine" />
               </div>
-            </TabsContent>
-
-            <TabsContent value="signup" className="space-y-4 m-0">
               <div className="space-y-2">
                 <Label>Gender (optional)</Label>
                 <Select value={gender} onValueChange={(v) => setGender(v as typeof gender)}>
