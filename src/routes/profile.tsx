@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -18,6 +20,7 @@ import { getOrCreateConversation } from "@/lib/messaging";
 import { ChefAvatar } from "@/components/ChefAvatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { lastSeenLabel } from "@/lib/relative-time";
+import { calculateAge, GENDER_LABELS } from "@/lib/age";
 import type { ChefIcon } from "@/lib/avatars";
 
 type SearchParams = { u?: string };
