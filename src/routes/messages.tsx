@@ -524,6 +524,11 @@ function MessagesPage() {
             )}
           </div>
         </div>
+          </TabsContent>
+          <TabsContent value="groups" className="mt-4">
+            <GroupsPanel />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Dialog open={newChatOpen} onOpenChange={setNewChatOpen}>
