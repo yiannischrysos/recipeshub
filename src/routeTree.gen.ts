@@ -15,6 +15,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as IngredientsRouteImport } from './routes/ingredients'
 import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as FaviconsRouteImport } from './routes/favicons'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -52,6 +53,11 @@ const IngredientsRoute = IngredientsRouteImport.update({
 const FavoritesRoute = FavoritesRouteImport.update({
   id: '/favorites',
   path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaviconsRoute = FaviconsRouteImport.update({
+  id: '/favicons',
+  path: '/favicons',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/announcements': typeof AnnouncementsRoute
   '/auth': typeof AuthRoute
+  '/favicons': typeof FaviconsRoute
   '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/announcements': typeof AnnouncementsRoute
   '/auth': typeof AuthRoute
+  '/favicons': typeof FaviconsRoute
   '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/announcements': typeof AnnouncementsRoute
   '/auth': typeof AuthRoute
+  '/favicons': typeof FaviconsRoute
   '/favorites': typeof FavoritesRoute
   '/ingredients': typeof IngredientsRoute
   '/messages': typeof MessagesRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/announcements'
     | '/auth'
+    | '/favicons'
     | '/favorites'
     | '/ingredients'
     | '/messages'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/announcements'
     | '/auth'
+    | '/favicons'
     | '/favorites'
     | '/ingredients'
     | '/messages'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/announcements'
     | '/auth'
+    | '/favicons'
     | '/favorites'
     | '/ingredients'
     | '/messages'
@@ -200,6 +212,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AnnouncementsRoute: typeof AnnouncementsRoute
   AuthRoute: typeof AuthRoute
+  FaviconsRoute: typeof FaviconsRoute
   FavoritesRoute: typeof FavoritesRoute
   IngredientsRoute: typeof IngredientsRoute
   MessagesRoute: typeof MessagesRoute
@@ -254,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/favorites'
       fullPath: '/favorites'
       preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favicons': {
+      id: '/favicons'
+      path: '/favicons'
+      fullPath: '/favicons'
+      preLoaderRoute: typeof FaviconsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -320,6 +340,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AnnouncementsRoute: AnnouncementsRoute,
   AuthRoute: AuthRoute,
+  FaviconsRoute: FaviconsRoute,
   FavoritesRoute: FavoritesRoute,
   IngredientsRoute: IngredientsRoute,
   MessagesRoute: MessagesRoute,
