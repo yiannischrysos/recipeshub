@@ -111,6 +111,10 @@ function OwnProfile() {
   const [nickname, setNickname] = useState("");
   const [bio, setBio] = useState("");
   const [avatarIcon, setAvatarIcon] = useState<ChefIcon>("chef_male");
+  const [gender, setGender] = useState<string>("");
+  const [showGender, setShowGender] = useState(false);
+  const [birthDate, setBirthDate] = useState("");
+  const [showAge, setShowAge] = useState(false);
   const [email, setEmail] = useState(user!.email ?? "");
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
@@ -122,7 +126,7 @@ function OwnProfile() {
   const load = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("id,display_name,nickname,bio_note,avatar_url,avatar_icon")
+      .select("id,display_name,nickname,bio_note,avatar_url,avatar_icon,gender,show_gender,birth_date,show_age")
       .eq("id", user!.id)
       .maybeSingle();
     if (data) {
@@ -130,6 +134,10 @@ function OwnProfile() {
       setNickname(data.nickname ?? "");
       setBio(data.bio_note ?? "");
       setAvatarIcon(data.avatar_icon === "chef_female" ? "chef_female" : "chef_male");
+      setGender(data.gender ?? "");
+      setShowGender(!!data.show_gender);
+      setBirthDate(data.birth_date ?? "");
+      setShowAge(!!data.show_age);
     }
     const { data: pres } = await supabase
       .from("user_presence").select("is_online,last_seen_at").eq("user_id", user!.id).maybeSingle();
@@ -146,6 +154,10 @@ function OwnProfile() {
         nickname: nickname.trim() || null,
         bio_note: bio.trim() || null,
         avatar_icon: avatarIcon,
+        gender: gender || null,
+        show_gender: showGender,
+        birth_date: birthDate || null,
+        show_age: showAge,
       })
       .eq("id", user!.id);
     setBusy(false);
