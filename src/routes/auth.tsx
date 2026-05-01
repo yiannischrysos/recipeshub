@@ -59,6 +59,15 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        if (!acceptTerms) throw new Error("You must accept the Terms and Privacy Policy.");
+        if (!confirmAge16) throw new Error("You must confirm you are at least 16 years old.");
+        // Block under-16 if they provided a birth date
+        if (birthDate) {
+          const dob = new Date(birthDate);
+          const ageMs = Date.now() - dob.getTime();
+          const age = ageMs / (365.25 * 24 * 60 * 60 * 1000);
+          if (age < 16) throw new Error("You must be at least 16 years old to create an account.");
+        }
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -80,6 +89,17 @@ function AuthPage() {
             birth_date: birthDate || null,
             show_age: showAge,
           }, { onConflict: "id" });
+        }
+        // Record consent (GDPR audit trail)
+        if (data.user) {
+          const ua = typeof navigator !== "undefined" ? navigator.userAgent : null;
+          const consents = (["terms", "privacy", "age_16"] as const).map((doc) => ({
+            user_id: data.user!.id,
+            document: doc,
+            version: LEGAL_VERSIONS[doc],
+            user_agent: ua,
+          }));
+          await supabase.from("legal_consents").insert(consents);
         }
         toast.success("Account created. You can sign in now.");
         setMode("signin");
