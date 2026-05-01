@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { UserPlus, UserCheck, UserX, Trash2, Search, Users, Eye, MessageCircle } from "lucide-react";
+import { DataExportButton } from "@/components/DataExportButton";
 import { getOrCreateConversation } from "@/lib/messaging";
 import { ChefAvatar } from "@/components/ChefAvatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
@@ -311,9 +312,16 @@ function OwnProfile() {
             <Input type="password" placeholder="Confirm new password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} />
             <Button variant="outline" onClick={savePwd} disabled={busy || !pwd}>Update password</Button>
           </div>
+          <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <h3 className="font-semibold flex items-center gap-2">Privacy & your data</h3>
+            <p className="text-sm text-muted-foreground">
+              Download a copy of all data we hold about you (GDPR Art. 15 & 20).
+            </p>
+            <DataExportButton userId={user!.id} />
+          </div>
           <div className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
             <h3 className="font-semibold text-destructive flex items-center gap-2"><Trash2 className="h-4 w-4" /> Danger zone</h3>
-            <p className="text-sm text-muted-foreground">Permanently delete all your recipes, ingredients and profile data.</p>
+            <p className="text-sm text-muted-foreground">Permanently delete all your recipes, ingredients and profile data (GDPR right to erasure).</p>
             <Button variant="destructive" onClick={() => setAskDelete(true)}>Delete account</Button>
           </div>
         </TabsContent>
