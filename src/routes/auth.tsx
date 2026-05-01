@@ -174,6 +174,32 @@ function AuthPage() {
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
 
+            {mode === "signup" && (
+              <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                <label className="flex items-start gap-2 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={confirmAge16}
+                    onCheckedChange={(v) => setConfirmAge16(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>I confirm I am at least <strong>16 years old</strong>.</span>
+                </label>
+                <label className="flex items-start gap-2 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={acceptTerms}
+                    onCheckedChange={(v) => setAcceptTerms(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <Link to="/legal/terms" className="underline hover:text-primary" target="_blank">Terms of Service</Link>{" "}
+                    and{" "}
+                    <Link to="/legal/privacy" className="underline hover:text-primary" target="_blank">Privacy Policy</Link>.
+                  </span>
+                </label>
+              </div>
+            )}
+
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
             </Button>
