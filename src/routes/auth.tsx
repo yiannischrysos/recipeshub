@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { LEGAL_VERSIONS } from "@/lib/legal";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -28,6 +30,8 @@ function AuthPage() {
   const [showGender, setShowGender] = useState(false);
   const [birthDate, setBirthDate] = useState("");
   const [showAge, setShowAge] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [confirmAge16, setConfirmAge16] = useState(false);
   const [busy, setBusy] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
