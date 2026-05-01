@@ -23,6 +23,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RecipesIndexRouteImport } from './routes/recipes.index'
 import { Route as GroupsIndexRouteImport } from './routes/groups.index'
 import { Route as RecipesIdRouteImport } from './routes/recipes.$id'
+import { Route as LegalTermsRouteImport } from './routes/legal.terms'
+import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
+import { Route as LegalImprintRouteImport } from './routes/legal.imprint'
+import { Route as LegalDpaRouteImport } from './routes/legal.dpa'
+import { Route as LegalCookiesRouteImport } from './routes/legal.cookies'
+import { Route as LegalAccessibilityRouteImport } from './routes/legal.accessibility'
 import { Route as GroupsIdRouteImport } from './routes/groups.$id'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -95,6 +101,36 @@ const RecipesIdRoute = RecipesIdRouteImport.update({
   path: '/recipes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({
+  id: '/legal/terms',
+  path: '/legal/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
+  id: '/legal/privacy',
+  path: '/legal/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalImprintRoute = LegalImprintRouteImport.update({
+  id: '/legal/imprint',
+  path: '/legal/imprint',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalDpaRoute = LegalDpaRouteImport.update({
+  id: '/legal/dpa',
+  path: '/legal/dpa',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalCookiesRoute = LegalCookiesRouteImport.update({
+  id: '/legal/cookies',
+  path: '/legal/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalAccessibilityRoute = LegalAccessibilityRouteImport.update({
+  id: '/legal/accessibility',
+  path: '/legal/accessibility',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GroupsIdRoute = GroupsIdRouteImport.update({
   id: '/groups/$id',
   path: '/groups/$id',
@@ -114,6 +150,12 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/groups/$id': typeof GroupsIdRoute
+  '/legal/accessibility': typeof LegalAccessibilityRoute
+  '/legal/cookies': typeof LegalCookiesRoute
+  '/legal/dpa': typeof LegalDpaRoute
+  '/legal/imprint': typeof LegalImprintRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/recipes/$id': typeof RecipesIdRoute
   '/groups/': typeof GroupsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
@@ -131,6 +173,12 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/groups/$id': typeof GroupsIdRoute
+  '/legal/accessibility': typeof LegalAccessibilityRoute
+  '/legal/cookies': typeof LegalCookiesRoute
+  '/legal/dpa': typeof LegalDpaRoute
+  '/legal/imprint': typeof LegalImprintRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/recipes/$id': typeof RecipesIdRoute
   '/groups': typeof GroupsIndexRoute
   '/recipes': typeof RecipesIndexRoute
@@ -149,6 +197,12 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
   '/groups/$id': typeof GroupsIdRoute
+  '/legal/accessibility': typeof LegalAccessibilityRoute
+  '/legal/cookies': typeof LegalCookiesRoute
+  '/legal/dpa': typeof LegalDpaRoute
+  '/legal/imprint': typeof LegalImprintRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/recipes/$id': typeof RecipesIdRoute
   '/groups/': typeof GroupsIndexRoute
   '/recipes/': typeof RecipesIndexRoute
@@ -168,6 +222,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/groups/$id'
+    | '/legal/accessibility'
+    | '/legal/cookies'
+    | '/legal/dpa'
+    | '/legal/imprint'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/recipes/$id'
     | '/groups/'
     | '/recipes/'
@@ -185,6 +245,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/groups/$id'
+    | '/legal/accessibility'
+    | '/legal/cookies'
+    | '/legal/dpa'
+    | '/legal/imprint'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/recipes/$id'
     | '/groups'
     | '/recipes'
@@ -202,6 +268,12 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reset-password'
     | '/groups/$id'
+    | '/legal/accessibility'
+    | '/legal/cookies'
+    | '/legal/dpa'
+    | '/legal/imprint'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/recipes/$id'
     | '/groups/'
     | '/recipes/'
@@ -220,6 +292,12 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   GroupsIdRoute: typeof GroupsIdRoute
+  LegalAccessibilityRoute: typeof LegalAccessibilityRoute
+  LegalCookiesRoute: typeof LegalCookiesRoute
+  LegalDpaRoute: typeof LegalDpaRoute
+  LegalImprintRoute: typeof LegalImprintRoute
+  LegalPrivacyRoute: typeof LegalPrivacyRoute
+  LegalTermsRoute: typeof LegalTermsRoute
   RecipesIdRoute: typeof RecipesIdRoute
   GroupsIndexRoute: typeof GroupsIndexRoute
   RecipesIndexRoute: typeof RecipesIndexRoute
@@ -325,6 +403,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecipesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal/terms': {
+      id: '/legal/terms'
+      path: '/legal/terms'
+      fullPath: '/legal/terms'
+      preLoaderRoute: typeof LegalTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacy': {
+      id: '/legal/privacy'
+      path: '/legal/privacy'
+      fullPath: '/legal/privacy'
+      preLoaderRoute: typeof LegalPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/imprint': {
+      id: '/legal/imprint'
+      path: '/legal/imprint'
+      fullPath: '/legal/imprint'
+      preLoaderRoute: typeof LegalImprintRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/dpa': {
+      id: '/legal/dpa'
+      path: '/legal/dpa'
+      fullPath: '/legal/dpa'
+      preLoaderRoute: typeof LegalDpaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/cookies': {
+      id: '/legal/cookies'
+      path: '/legal/cookies'
+      fullPath: '/legal/cookies'
+      preLoaderRoute: typeof LegalCookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/accessibility': {
+      id: '/legal/accessibility'
+      path: '/legal/accessibility'
+      fullPath: '/legal/accessibility'
+      preLoaderRoute: typeof LegalAccessibilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/groups/$id': {
       id: '/groups/$id'
       path: '/groups/$id'
@@ -348,6 +468,12 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   GroupsIdRoute: GroupsIdRoute,
+  LegalAccessibilityRoute: LegalAccessibilityRoute,
+  LegalCookiesRoute: LegalCookiesRoute,
+  LegalDpaRoute: LegalDpaRoute,
+  LegalImprintRoute: LegalImprintRoute,
+  LegalPrivacyRoute: LegalPrivacyRoute,
+  LegalTermsRoute: LegalTermsRoute,
   RecipesIdRoute: RecipesIdRoute,
   GroupsIndexRoute: GroupsIndexRoute,
   RecipesIndexRoute: RecipesIndexRoute,

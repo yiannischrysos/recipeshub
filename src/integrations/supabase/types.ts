@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          id: string
+          processed_at: string | null
+          reason: string | null
+          requested_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          processed_at?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          processed_at?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       announcements: {
         Row: {
           author_id: string
@@ -513,6 +540,33 @@ export type Database = {
           unit?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      legal_consents: {
+        Row: {
+          accepted_at: string
+          document: string
+          id: string
+          user_agent: string | null
+          user_id: string
+          version: string
+        }
+        Insert: {
+          accepted_at?: string
+          document: string
+          id?: string
+          user_agent?: string | null
+          user_id: string
+          version: string
+        }
+        Update: {
+          accepted_at?: string
+          document?: string
+          id?: string
+          user_agent?: string | null
+          user_id?: string
+          version?: string
         }
         Relationships: []
       }

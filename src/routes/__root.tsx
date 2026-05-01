@@ -2,6 +2,8 @@ import { Outlet, Link, createRootRoute, HeadContent, Scripts, ClientOnly } from 
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import { AppHeader } from "@/components/AppHeader";
+import { AppFooter } from "@/components/AppFooter";
+import { CookieNotice } from "@/components/CookieNotice";
 import { usePresence } from "@/hooks/use-presence";
 
 import appCss from "../styles.css?url";
@@ -76,7 +78,11 @@ function RootComponent() {
         <main className="flex-1">
           <Outlet />
         </main>
+        <AppFooter />
       </div>
+      <ClientOnly fallback={null}>
+        <CookieNotice />
+      </ClientOnly>
       <Toaster richColors position="top-center" />
     </AuthProvider>
   );

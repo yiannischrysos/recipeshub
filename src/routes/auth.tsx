@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { LEGAL_VERSIONS } from "@/lib/legal";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -28,6 +30,8 @@ function AuthPage() {
   const [showGender, setShowGender] = useState(false);
   const [birthDate, setBirthDate] = useState("");
   const [showAge, setShowAge] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [confirmAge16, setConfirmAge16] = useState(false);
   const [busy, setBusy] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -55,6 +59,15 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        if (!acceptTerms) throw new Error("You must accept the Terms and Privacy Policy.");
+        if (!confirmAge16) throw new Error("You must confirm you are at least 16 years old.");
+        // Block under-16 if they provided a birth date
+        if (birthDate) {
+          const dob = new Date(birthDate);
+          const ageMs = Date.now() - dob.getTime();
+          const age = ageMs / (365.25 * 24 * 60 * 60 * 1000);
+          if (age < 16) throw new Error("You must be at least 16 years old to create an account.");
+        }
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -76,6 +89,17 @@ function AuthPage() {
             birth_date: birthDate || null,
             show_age: showAge,
           }, { onConflict: "id" });
+        }
+        // Record consent (GDPR audit trail)
+        if (data.user) {
+          const ua = typeof navigator !== "undefined" ? navigator.userAgent : null;
+          const consents = (["terms", "privacy", "age_16"] as const).map((doc) => ({
+            user_id: data.user!.id,
+            document: doc,
+            version: LEGAL_VERSIONS[doc],
+            user_agent: ua,
+          }));
+          await supabase.from("legal_consents").insert(consents);
         }
         toast.success("Account created. You can sign in now.");
         setMode("signin");
@@ -149,6 +173,32 @@ function AuthPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
+
+            {mode === "signup" && (
+              <div className="space-y-3 rounded-lg border border-border bg-muted/30 p-3">
+                <label className="flex items-start gap-2 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={confirmAge16}
+                    onCheckedChange={(v) => setConfirmAge16(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>I confirm I am at least <strong>16 years old</strong>.</span>
+                </label>
+                <label className="flex items-start gap-2 text-xs cursor-pointer">
+                  <Checkbox
+                    checked={acceptTerms}
+                    onCheckedChange={(v) => setAcceptTerms(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    I agree to the{" "}
+                    <Link to="/legal/terms" className="underline hover:text-primary" target="_blank">Terms of Service</Link>{" "}
+                    and{" "}
+                    <Link to="/legal/privacy" className="underline hover:text-primary" target="_blank">Privacy Policy</Link>.
+                  </span>
+                </label>
+              </div>
+            )}
 
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
