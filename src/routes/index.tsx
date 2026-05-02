@@ -49,10 +49,10 @@ function Index() {
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" /> RecipesHub
             </span>
-            <h1 className="mt-6 font-display text-5xl md:text-7xl font-semibold leading-[1.02] text-foreground">
+            <h1 className="mt-6 font-display text-6xl md:text-8xl font-normal leading-[1.0] text-foreground">
               Your recipe book,
               <br />
-              <span className="italic text-primary">costed to the gram.</span>
+              <span className="italic text-muted-foreground">costed to the gram.</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground max-w-xl">
               Build your ingredient library, save your recipes, and instantly
