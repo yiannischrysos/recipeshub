@@ -11,6 +11,7 @@ import {
   BookOpen, Carrot, Heart, MessageCircle, Tag, ShieldCheck,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
@@ -125,9 +126,12 @@ export function AppHeader() {
               </Button>
             </>
           ) : (
-            <Button size="sm" onClick={() => nav({ to: "/auth" })}>
-              Sign in
-            </Button>
+            <>
+              <ThemeToggle />
+              <Button size="sm" onClick={() => nav({ to: "/auth" })}>
+                Sign in
+              </Button>
+            </>
           )}
         </div>
       </div>
