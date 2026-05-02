@@ -1,8 +1,8 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts, ClientOnly } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
-import { AppHeader } from "@/components/AppHeader";
-import { AppFooter } from "@/components/AppFooter";
+import { ThemeProvider } from "@/lib/theme-context";
+import { AppLayout } from "@/components/AppLayout";
 import { CookieNotice } from "@/components/CookieNotice";
 import { usePresence } from "@/hooks/use-presence";
 
@@ -69,22 +69,18 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <AuthProvider>
-      <ClientOnly fallback={null}>
-        <PresenceMount />
-      </ClientOnly>
-      <div className="min-h-screen flex flex-col">
-        <AppHeader />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <AppFooter />
-      </div>
-      <ClientOnly fallback={null}>
-        <CookieNotice />
-      </ClientOnly>
-      <Toaster richColors position="top-center" />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ClientOnly fallback={null}>
+          <PresenceMount />
+        </ClientOnly>
+        <AppLayout />
+        <ClientOnly fallback={null}>
+          <CookieNotice />
+        </ClientOnly>
+        <Toaster richColors position="top-center" />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
