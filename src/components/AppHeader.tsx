@@ -49,8 +49,8 @@ export function AppHeader() {
   };
 
   return (
-    <header className="border-b border-border bg-card/70 backdrop-blur sticky top-0 z-30">
-      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-3">
+    <header className="border-b border-border bg-background sticky top-0 z-30">
+      <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground grid place-items-center">
             <ChefHat className="h-5 w-5" />
