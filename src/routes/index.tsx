@@ -29,14 +29,16 @@ function Index() {
   }, [loading, user, nav]);
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Soft ambient background */}
+    <div className="relative">
+      {/* Subtle dotted grid */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
         style={{
-          background:
-            "radial-gradient(55% 55% at 85% -10%, oklch(0.85 0.08 60 / 0.55), transparent 60%), radial-gradient(45% 45% at -10% 110%, oklch(0.78 0.11 60 / 0.4), transparent 60%)",
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, oklch(0.9 0.004 270) 1px, transparent 0)",
+          backgroundSize: "32px 32px",
+          maskImage: "radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 70%)",
         }}
       />
 
@@ -47,10 +49,10 @@ function Index() {
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card/70 px-3 py-1 text-xs uppercase tracking-widest text-muted-foreground backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" /> RecipesHub
             </span>
-            <h1 className="mt-6 font-display text-5xl md:text-7xl font-semibold leading-[1.02] text-foreground">
+            <h1 className="mt-6 font-display text-6xl md:text-8xl font-normal leading-[1.0] text-foreground">
               Your recipe book,
               <br />
-              <span className="italic text-primary">costed to the gram.</span>
+              <span className="italic text-muted-foreground">costed to the gram.</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground max-w-xl">
               Build your ingredient library, save your recipes, and instantly
