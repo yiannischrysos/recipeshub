@@ -4,7 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { AppFooter } from "@/components/AppFooter";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
 
 // Routes that should use the sidebar layout (authenticated app surfaces).
 const APP_PREFIXES = [
@@ -59,9 +59,6 @@ export function AppLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
-      <div className="absolute top-3 right-3 z-40 hidden sm:block">
-        <ThemeToggle />
-      </div>
       <main className="flex-1">
         <Outlet />
       </main>
