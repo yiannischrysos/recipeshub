@@ -97,6 +97,7 @@ export function AppHeader() {
         <div className="flex items-center gap-2 shrink-0">
           {user ? (
             <>
+              <ThemeToggle />
               <NotificationBell />
               {isAdmin ? (
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium">
