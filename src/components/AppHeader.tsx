@@ -11,6 +11,7 @@ import {
   BookOpen, Carrot, Heart, MessageCircle, Tag, ShieldCheck,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function AppHeader() {
   const { user, signOut } = useAuth();
@@ -48,8 +49,8 @@ export function AppHeader() {
   };
 
   return (
-    <header className="border-b border-border bg-card/70 backdrop-blur sticky top-0 z-30">
-      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-3">
+    <header className="border-b border-border bg-background sticky top-0 z-30">
+      <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center gap-2 shrink-0">
           <div className="h-9 w-9 rounded-full bg-primary text-primary-foreground grid place-items-center">
             <ChefHat className="h-5 w-5" />
@@ -96,6 +97,7 @@ export function AppHeader() {
         <div className="flex items-center gap-2 shrink-0">
           {user ? (
             <>
+              <ThemeToggle />
               <NotificationBell />
               {isAdmin ? (
                 <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-medium">
@@ -125,9 +127,12 @@ export function AppHeader() {
               </Button>
             </>
           ) : (
-            <Button size="sm" onClick={() => nav({ to: "/auth" })}>
-              Sign in
-            </Button>
+            <>
+              <ThemeToggle />
+              <Button size="sm" onClick={() => nav({ to: "/auth" })}>
+                Sign in
+              </Button>
+            </>
           )}
         </div>
       </div>
