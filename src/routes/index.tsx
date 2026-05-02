@@ -29,14 +29,16 @@ function Index() {
   }, [loading, user, nav]);
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Soft ambient background */}
+    <div className="relative">
+      {/* Subtle dotted grid */}
       <div
         aria-hidden
         className="absolute inset-0 -z-10"
         style={{
-          background:
-            "radial-gradient(55% 55% at 85% -10%, oklch(0.85 0.08 60 / 0.55), transparent 60%), radial-gradient(45% 45% at -10% 110%, oklch(0.78 0.11 60 / 0.4), transparent 60%)",
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, oklch(0.9 0.004 270) 1px, transparent 0)",
+          backgroundSize: "32px 32px",
+          maskImage: "radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent 70%)",
         }}
       />
 
