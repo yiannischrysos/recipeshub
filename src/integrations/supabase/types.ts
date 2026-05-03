@@ -363,6 +363,7 @@ export type Database = {
           sender_id: string
           shared_ingredient_snapshot: Json | null
           shared_recipe_id: string | null
+          shared_recipe_snapshot: Json | null
         }
         Insert: {
           content?: string | null
@@ -376,6 +377,7 @@ export type Database = {
           sender_id: string
           shared_ingredient_snapshot?: Json | null
           shared_recipe_id?: string | null
+          shared_recipe_snapshot?: Json | null
         }
         Update: {
           content?: string | null
@@ -389,6 +391,7 @@ export type Database = {
           sender_id?: string
           shared_ingredient_snapshot?: Json | null
           shared_recipe_id?: string | null
+          shared_recipe_snapshot?: Json | null
         }
         Relationships: [
           {
@@ -650,6 +653,7 @@ export type Database = {
           sender_id: string
           shared_ingredient_snapshot: Json | null
           shared_recipe_id: string | null
+          shared_recipe_snapshot: Json | null
         }
         Insert: {
           content?: string | null
@@ -663,6 +667,7 @@ export type Database = {
           sender_id: string
           shared_ingredient_snapshot?: Json | null
           shared_recipe_id?: string | null
+          shared_recipe_snapshot?: Json | null
         }
         Update: {
           content?: string | null
@@ -676,6 +681,7 @@ export type Database = {
           sender_id?: string
           shared_ingredient_snapshot?: Json | null
           shared_recipe_id?: string | null
+          shared_recipe_snapshot?: Json | null
         }
         Relationships: [
           {
