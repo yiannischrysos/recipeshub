@@ -369,7 +369,10 @@ function MessagesPage() {
 
   const onShareIngredient = async (ingredientId: string) => {
     const snap = await snapshotIngredient(ingredientId);
-    if (!snap) return toast.error("Could not load ingredient");
+    if (!snap) {
+      toast.error("Could not load ingredient");
+      return;
+    }
     await send({ shared_ingredient_snapshot: snap });
   };
 
