@@ -326,32 +326,68 @@ export type Database = {
         }
         Relationships: []
       }
+      group_message_reads: {
+        Row: {
+          group_id: string
+          id: string
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_messages: {
         Row: {
           content: string | null
           created_at: string
+          deleted_at: string | null
+          edited_at: string | null
           group_id: string
           id: string
           mentions: string[]
+          reply_to_id: string | null
           sender_id: string
+          shared_ingredient_snapshot: Json | null
           shared_recipe_id: string | null
         }
         Insert: {
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           group_id: string
           id?: string
           mentions?: string[]
+          reply_to_id?: string | null
           sender_id: string
+          shared_ingredient_snapshot?: Json | null
           shared_recipe_id?: string | null
         }
         Update: {
           content?: string | null
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           group_id?: string
           id?: string
           mentions?: string[]
+          reply_to_id?: string | null
           sender_id?: string
+          shared_ingredient_snapshot?: Json | null
           shared_recipe_id?: string | null
         }
         Relationships: [
@@ -360,6 +396,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "group_messages"
             referencedColumns: ["id"]
           },
           {
@@ -599,27 +642,39 @@ export type Database = {
           content: string | null
           conversation_id: string
           created_at: string
+          deleted_at: string | null
+          edited_at: string | null
           id: string
           read_at: string | null
+          reply_to_id: string | null
           sender_id: string
+          shared_ingredient_snapshot: Json | null
           shared_recipe_id: string | null
         }
         Insert: {
           content?: string | null
           conversation_id: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           read_at?: string | null
+          reply_to_id?: string | null
           sender_id: string
+          shared_ingredient_snapshot?: Json | null
           shared_recipe_id?: string | null
         }
         Update: {
           content?: string | null
           conversation_id?: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           read_at?: string | null
+          reply_to_id?: string | null
           sender_id?: string
+          shared_ingredient_snapshot?: Json | null
           shared_recipe_id?: string | null
         }
         Relationships: [
@@ -628,6 +683,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
           {
