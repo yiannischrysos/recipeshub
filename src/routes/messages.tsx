@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { AppHeader } from "@/components/AppHeader";
 import { useAuth } from "@/lib/auth-context";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,7 +10,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChefAvatar } from "@/components/ChefAvatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Send, Ban, ShieldOff, Check, X, ChefHat, MessageSquarePlus, Plus, Users } from "lucide-react";
+import {
+  Ban,
+  ShieldOff,
+  Check,
+  X,
+  MessageSquarePlus,
+  Plus,
+  Users,
+  ArrowLeft,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -20,7 +29,20 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { blockUser, getOrCreateConversation, unblockUser } from "@/lib/messaging";
-import { MessageReactions } from "@/components/MessageReactions";
+import {
+  ChatBubble,
+  type ChatMessage,
+  type ChatProfile,
+  nameOf,
+} from "@/components/chat/ChatBubble";
+import { ChatComposer } from "@/components/chat/ChatComposer";
+import {
+  snapshotIngredient,
+  snapshotRecipe,
+  type IngredientSnapshot,
+  type RecipeSnapshot,
+} from "@/lib/share-content";
+import { useTypingChannel } from "@/lib/typing-channel";
 
 export const Route = createFileRoute("/messages")({
   component: MessagesPage,
@@ -35,42 +57,55 @@ type Conversation = {
   last_message_at: string;
 };
 
-type Profile = {
-  id: string;
-  display_name: string | null;
-  nickname: string | null;
-  avatar_url: string | null;
-  avatar_icon: string | null;
-};
-
-type Message = {
+type DbMessage = {
   id: string;
   conversation_id: string;
   sender_id: string;
   content: string | null;
   shared_recipe_id: string | null;
+  shared_recipe_snapshot: RecipeSnapshot | null;
+  shared_ingredient_snapshot: IngredientSnapshot | null;
+  reply_to_id: string | null;
+  edited_at: string | null;
+  deleted_at: string | null;
+  read_at: string | null;
   created_at: string;
 };
 
-type RecipeLite = { id: string; name: string; category: string | null };
+function toChatMessage(m: DbMessage): ChatMessage {
+  return {
+    id: m.id,
+    sender_id: m.sender_id,
+    content: m.content,
+    created_at: m.created_at,
+    edited_at: m.edited_at,
+    deleted_at: m.deleted_at,
+    reply_to_id: m.reply_to_id,
+    shared_recipe_id: m.shared_recipe_id,
+    shared_recipe_snapshot: m.shared_recipe_snapshot,
+    shared_ingredient_snapshot: m.shared_ingredient_snapshot,
+    read_at: m.read_at,
+  };
+}
 
 function MessagesPage() {
   const { user, loading } = useAuth();
   const nav = useNavigate();
   const [convs, setConvs] = useState<Conversation[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [profiles, setProfiles] = useState<Record<string, ChatProfile>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<DbMessage[]>([]);
   const [input, setInput] = useState("");
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [blocks, setBlocks] = useState<{ iBlocked: Set<string>; blockedMe: Set<string> }>({
     iBlocked: new Set(),
     blockedMe: new Set(),
   });
-  const [recipes, setRecipes] = useState<RecipeLite[]>([]);
-  const [shareOpen, setShareOpen] = useState(false);
   const [newChatOpen, setNewChatOpen] = useState(false);
-  const [friendList, setFriendList] = useState<Profile[]>([]);
+  const [friendList, setFriendList] = useState<ChatProfile[]>([]);
+  const [unread, setUnread] = useState<Record<string, number>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (!loading && !user) nav({ to: "/auth" });
@@ -80,7 +115,10 @@ function MessagesPage() {
   const loadAll = async () => {
     if (!user) return;
     const [{ data: cs }, { data: bs }] = await Promise.all([
-      supabase.from("conversations").select("*").order("last_message_at", { ascending: false }),
+      supabase
+        .from("conversations")
+        .select("*")
+        .order("last_message_at", { ascending: false }),
       supabase.from("blocks").select("blocker_id,blocked_id"),
     ]);
     const list = (cs ?? []) as Conversation[];
@@ -93,8 +131,8 @@ function MessagesPage() {
         .from("profiles")
         .select("id,display_name,nickname,avatar_url,avatar_icon")
         .in("id", otherIds);
-      const map: Record<string, Profile> = {};
-      (ps ?? []).forEach((p) => (map[p.id] = p as Profile));
+      const map: Record<string, ChatProfile> = {};
+      (ps ?? []).forEach((p) => (map[p.id] = p as ChatProfile));
       setProfiles(map);
     }
     const iBlocked = new Set<string>();
@@ -104,25 +142,53 @@ function MessagesPage() {
       else if (b.blocked_id === user.id) blockedMe.add(b.blocker_id);
     });
     setBlocks({ iBlocked, blockedMe });
+
+    // Unread counts (messages addressed to me with no read_at)
+    if (list.length) {
+      const ids = list.map((c) => c.id);
+      const { data: ur } = await supabase
+        .from("messages")
+        .select("conversation_id,sender_id,read_at")
+        .in("conversation_id", ids)
+        .is("read_at", null);
+      const counts: Record<string, number> = {};
+      (ur ?? []).forEach((m) => {
+        if (m.sender_id !== user.id) {
+          counts[m.conversation_id] = (counts[m.conversation_id] ?? 0) + 1;
+        }
+      });
+      setUnread(counts);
+    } else {
+      setUnread({});
+    }
   };
 
   useEffect(() => {
     if (user) loadAll();
   }, [user]);
 
-  // Realtime conversations
+  // Realtime: conversations + global new-message notifier
   useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel("conversations-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "conversations" }, () => loadAll())
+      .channel("dm-global")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversations" },
+        () => loadAll(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        () => loadAll(),
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
   }, [user]);
 
-  // Load messages for active conversation + realtime
+  // Load messages + realtime for active conversation
   useEffect(() => {
     if (!activeId) {
       setMessages([]);
@@ -133,14 +199,45 @@ function MessagesPage() {
       .select("*")
       .eq("conversation_id", activeId)
       .order("created_at", { ascending: true })
-      .then(({ data }) => setMessages((data ?? []) as Message[]));
+      .then(({ data }) => setMessages((data ?? []) as DbMessage[]));
 
     const ch = supabase
       .channel(`messages-${activeId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${activeId}` },
-        (payload) => setMessages((m) => [...m, payload.new as Message]),
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${activeId}`,
+        },
+        (payload) => setMessages((m) => [...m, payload.new as DbMessage]),
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${activeId}`,
+        },
+        (payload) => {
+          const upd = payload.new as DbMessage;
+          setMessages((m) => m.map((x) => (x.id === upd.id ? upd : x)));
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${activeId}`,
+        },
+        (payload) => {
+          const del = payload.old as { id: string };
+          setMessages((m) => m.filter((x) => x.id !== del.id));
+        },
       )
       .subscribe();
     return () => {
@@ -148,21 +245,30 @@ function MessagesPage() {
     };
   }, [activeId]);
 
+  // Auto-scroll to bottom on new message / open
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+    });
   }, [messages.length, activeId]);
 
-  // Load my recipes (for sharing)
+  // Mark incoming messages as read once viewed
   useEffect(() => {
-    if (!user) return;
+    if (!user || !activeId) return;
+    const unreadIds = messages
+      .filter((m) => m.sender_id !== user.id && !m.read_at)
+      .map((m) => m.id);
+    if (unreadIds.length === 0) return;
     supabase
-      .from("recipes")
-      .select("id,name,category")
-      .order("name")
-      .then(({ data }) => setRecipes((data ?? []) as RecipeLite[]));
-  }, [user]);
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .in("id", unreadIds)
+      .then(() => {
+        setUnread((u) => ({ ...u, [activeId]: 0 }));
+      });
+  }, [messages, activeId, user]);
 
-  // Load friends for new-chat dialog
+  // Friends for new chat dialog
   const openNewChat = async () => {
     if (!user) return;
     setNewChatOpen(true);
@@ -170,7 +276,9 @@ function MessagesPage() {
       .from("friendships")
       .select("user_a,user_b")
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`);
-    const friendIds = (fr ?? []).map((f) => (f.user_a === user.id ? f.user_b : f.user_a));
+    const friendIds = (fr ?? []).map((f) =>
+      f.user_a === user.id ? f.user_b : f.user_a,
+    );
     if (!friendIds.length) {
       setFriendList([]);
       return;
@@ -179,7 +287,7 @@ function MessagesPage() {
       .from("profiles")
       .select("id,display_name,nickname,avatar_url,avatar_icon")
       .in("id", friendIds);
-    setFriendList((ps ?? []) as Profile[]);
+    setFriendList((ps ?? []) as ChatProfile[]);
   };
 
   const startChat = async (otherId: string) => {
@@ -190,13 +298,19 @@ function MessagesPage() {
       setNewChatOpen(false);
       await loadAll();
     } catch (e) {
-      const err = e as Error;
-      toast.error(err.message || "Could not start chat");
+      toast.error((e as Error).message || "Could not start chat");
     }
   };
 
-  const active = useMemo(() => convs.find((c) => c.id === activeId) ?? null, [convs, activeId]);
-  const otherId = active ? (active.user_a === user?.id ? active.user_b : active.user_a) : null;
+  const active = useMemo(
+    () => convs.find((c) => c.id === activeId) ?? null,
+    [convs, activeId],
+  );
+  const otherId = active
+    ? active.user_a === user?.id
+      ? active.user_b
+      : active.user_a
+    : null;
   const otherProfile = otherId ? profiles[otherId] : null;
   const iBlockedThem = otherId ? blocks.iBlocked.has(otherId) : false;
   const theyBlockedMe = otherId ? blocks.blockedMe.has(otherId) : false;
@@ -208,21 +322,77 @@ function MessagesPage() {
     !theyBlockedMe &&
     (active.status === "accepted" || active.initiator_id === user?.id);
 
-  const send = async (recipeId?: string) => {
+  // Typing indicator
+  const { typingUsers, notifyTyping } = useTypingChannel(
+    activeId ? `dm-typing-${activeId}` : null,
+    user?.id ?? null,
+  );
+  const otherTyping = otherId ? typingUsers.has(otherId) : false;
+
+  const messagesById = useMemo(() => {
+    const map: Record<string, ChatMessage> = {};
+    messages.forEach((m) => (map[m.id] = toChatMessage(m)));
+    return map;
+  }, [messages]);
+
+  const send = async (overrides?: Partial<DbMessage>) => {
     if (!user || !active) return;
-    const content = recipeId ? null : input.trim();
-    if (!recipeId && !content) return;
-    const { error } = await supabase.from("messages").insert({
+    const content = overrides?.content !== undefined ? overrides.content : input.trim();
+    const isShare = !!(
+      overrides?.shared_recipe_id ||
+      overrides?.shared_recipe_snapshot ||
+      overrides?.shared_ingredient_snapshot
+    );
+    if (!isShare && !content) return;
+    const payload = {
       conversation_id: active.id,
       sender_id: user.id,
-      content,
-      shared_recipe_id: recipeId ?? null,
-    });
+      content: isShare ? null : content,
+      shared_recipe_id: overrides?.shared_recipe_id ?? null,
+      shared_recipe_snapshot: overrides?.shared_recipe_snapshot ?? null,
+      shared_ingredient_snapshot: overrides?.shared_ingredient_snapshot ?? null,
+      reply_to_id: replyTo?.id ?? null,
+    };
+    const { error } = await supabase.from("messages").insert(payload);
     if (error) {
       toast.error(error.message);
       return;
     }
-    if (!recipeId) setInput("");
+    if (!isShare) setInput("");
+    setReplyTo(null);
+  };
+
+  const onShareRecipe = async (recipeId: string) => {
+    const snap = await snapshotRecipe(recipeId);
+    await send({ shared_recipe_id: recipeId, shared_recipe_snapshot: snap });
+  };
+
+  const onShareIngredient = async (ingredientId: string) => {
+    const snap = await snapshotIngredient(ingredientId);
+    if (!snap) return toast.error("Could not load ingredient");
+    await send({ shared_ingredient_snapshot: snap });
+  };
+
+  const editMessage = async (m: ChatMessage, newText: string) => {
+    const { error } = await supabase
+      .from("messages")
+      .update({ content: newText, edited_at: new Date().toISOString() })
+      .eq("id", m.id);
+    if (error) toast.error(error.message);
+  };
+
+  const deleteMessage = async (m: ChatMessage) => {
+    const { error } = await supabase
+      .from("messages")
+      .update({
+        deleted_at: new Date().toISOString(),
+        content: null,
+        shared_recipe_id: null,
+        shared_recipe_snapshot: null,
+        shared_ingredient_snapshot: null,
+      })
+      .eq("id", m.id);
+    if (error) toast.error(error.message);
   };
 
   const respond = async (status: "accepted" | "declined") => {
@@ -250,7 +420,12 @@ function MessagesPage() {
     await loadAll();
   };
 
-  const nameOf = (p?: Profile | null) => p?.nickname || p?.display_name || "User";
+  const jumpToMessage = (id: string) => {
+    const node = messageRefs.current[id];
+    node?.scrollIntoView({ behavior: "smooth", block: "center" });
+    node?.classList.add("ring-2", "ring-primary");
+    setTimeout(() => node?.classList.remove("ring-2", "ring-primary"), 1200);
+  };
 
   if (loading || !user) {
     return (
@@ -259,6 +434,8 @@ function MessagesPage() {
       </div>
     );
   }
+
+  const showSidebar = !activeId;
 
   return (
     <div className="min-h-screen bg-background">
@@ -270,260 +447,247 @@ function MessagesPage() {
             <TabsTrigger value="groups">Groups</TabsTrigger>
           </TabsList>
           <TabsContent value="direct" className="mt-4">
-        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[calc(100vh-12rem)]">
-          {/* Sidebar */}
-          <div className="border border-border rounded-lg bg-card flex flex-col">
-            <div className="p-3 border-b border-border flex items-center justify-between">
-              <h2 className="font-semibold">Messages</h2>
-              <Button size="sm" variant="outline" onClick={openNewChat}>
-                <MessageSquarePlus className="h-4 w-4" />
-              </Button>
-            </div>
-            <ScrollArea className="flex-1">
-              {convs.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground">No conversations yet.</div>
-              ) : (
-                <ul>
-                  {convs.map((c) => {
-                    const oid = c.user_a === user.id ? c.user_b : c.user_a;
-                    const p = profiles[oid];
-                    const pending = c.status === "pending" && c.initiator_id !== user.id;
-                    return (
-                      <li key={c.id}>
-                        <button
-                          onClick={() => setActiveId(c.id)}
-                          className={`w-full text-left px-3 py-2 flex items-center gap-3 hover:bg-secondary/50 ${
-                            activeId === c.id ? "bg-secondary" : ""
-                          }`}
-                        >
-                          <Avatar className="h-9 w-9">
-                            {p?.avatar_url ? (
-                              <AvatarImage src={p.avatar_url} />
-                            ) : p?.avatar_icon ? (
-                              <ChefAvatar icon={p.avatar_icon} className="h-9 w-9" />
-                            ) : (
-                              <AvatarFallback>{nameOf(p)[0]?.toUpperCase()}</AvatarFallback>
-                            )}
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium truncate">{nameOf(p)}</div>
-                            <div className="text-xs text-muted-foreground truncate">
-                              {pending ? "Wants to message you" : new Date(c.last_message_at).toLocaleString()}
-                            </div>
-                          </div>
-                          {pending && <span className="h-2 w-2 rounded-full bg-primary" />}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </ScrollArea>
-          </div>
-
-          {/* Chat area */}
-          <div className="border border-border rounded-lg bg-card flex flex-col">
-            {!active ? (
-              <div className="flex-1 grid place-items-center text-muted-foreground">
-                Select a conversation
-              </div>
-            ) : (
-              <>
-                <div className="p-3 border-b border-border flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar className="h-9 w-9">
-                      {otherProfile?.avatar_url ? (
-                        <AvatarImage src={otherProfile.avatar_url} />
-                      ) : otherProfile?.avatar_icon ? (
-                        <ChefAvatar
-                          icon={otherProfile.avatar_icon}
-                          className="h-9 w-9"
-                        />
-                      ) : (
-                        <AvatarFallback>{nameOf(otherProfile)[0]?.toUpperCase()}</AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{nameOf(otherProfile)}</div>
-                      {theyBlockedMe && (
-                        <div className="text-xs text-destructive">This user has blocked you</div>
-                      )}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={toggleBlock}>
-                    {iBlockedThem ? (
-                      <>
-                        <ShieldOff className="h-4 w-4 mr-1" /> Unblock
-                      </>
-                    ) : (
-                      <>
-                        <Ban className="h-4 w-4 mr-1" /> Block
-                      </>
-                    )}
+            <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[calc(100vh-12rem)]">
+              {/* Sidebar */}
+              <div
+                className={`border border-border rounded-lg bg-card flex flex-col ${
+                  showSidebar ? "" : "hidden md:flex"
+                }`}
+              >
+                <div className="p-3 border-b border-border flex items-center justify-between">
+                  <h2 className="font-semibold">Messages</h2>
+                  <Button size="sm" variant="outline" onClick={openNewChat}>
+                    <MessageSquarePlus className="h-4 w-4" />
                   </Button>
                 </div>
-
-                {isPendingForMe && (
-                  <div className="p-3 border-b border-border bg-muted/40 flex items-center justify-between gap-2">
-                    <div className="text-sm">
-                      <strong>{nameOf(otherProfile)}</strong> wants to send you a message.
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => respond("declined")}>
-                        <X className="h-4 w-4 mr-1" /> Decline
-                      </Button>
-                      <Button size="sm" onClick={() => respond("accepted")}>
-                        <Check className="h-4 w-4 mr-1" /> Accept
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
                 <ScrollArea className="flex-1">
-                  <div ref={scrollRef} className="p-4 space-y-2">
-                    {messages.length === 0 ? (
-                      <div className="grid place-items-center py-12 text-center">
-                        <div className="max-w-sm">
-                          <div className="font-medium mb-1">No messages yet</div>
-                          <p className="text-sm text-muted-foreground">
-                            You don't have any previous messages with{" "}
-                            <strong>{nameOf(otherProfile)}</strong>. Want to start a
-                            new conversation?
-                          </p>
-                          {canSend && (
-                            <Button
-                              size="sm"
-                              className="mt-3"
-                              onClick={() => {
-                                if (!input.trim()) setInput("Hi 👋");
-                                setTimeout(() => {
-                                  document
-                                    .querySelector<HTMLInputElement>('input[placeholder^="Type a message"]')
-                                    ?.focus();
-                                }, 0);
-                              }}
-                            >
-                              Say hi
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      messages.map((m) => {
-                      const mine = m.sender_id === user.id;
-                      const recipe = m.shared_recipe_id
-                        ? recipes.find((r) => r.id === m.shared_recipe_id)
-                        : null;
-                      return (
-                        <div
-                          key={m.id}
-                          className={`flex ${mine ? "justify-end" : "justify-start"}`}
-                        >
-                          <div
-                            className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
-                              mine
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-secondary text-secondary-foreground"
-                            }`}
-                          >
-                            {m.shared_recipe_id ? (
-                              <Link
-                                to="/recipes/$id"
-                                params={{ id: m.shared_recipe_id }}
-                                className="flex items-center gap-2 underline-offset-2 hover:underline"
-                              >
-                                <ChefHat className="h-4 w-4" />
-                                <span className="font-medium">
-                                  {recipe?.name ?? "Shared recipe"}
-                                </span>
-                              </Link>
-                            ) : (
-                              <div className="whitespace-pre-wrap break-words">{m.content}</div>
-                            )}
-                            <div
-                              className={`text-[10px] mt-1 ${mine ? "opacity-70" : "text-muted-foreground"}`}
-                            >
-                              {new Date(m.created_at).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </div>
-                            <MessageReactions messageId={m.id} userId={user.id} scope="dm" />
-                          </div>
-                        </div>
-                      );
-                    })
-                    )}
-                  </div>
-                </ScrollArea>
-
-                <div className="p-3 border-t border-border">
-                  {!canSend ? (
-                    <div className="text-sm text-muted-foreground text-center py-2">
-                      {iBlockedThem
-                        ? "You have blocked this user."
-                        : theyBlockedMe
-                          ? "You can't message this user."
-                          : "Waiting for the other user to accept your request…"}
+                  {convs.length === 0 ? (
+                    <div className="p-4 text-sm text-muted-foreground">
+                      No conversations yet.
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="icon" title="Share a recipe">
-                            <ChefHat className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Share a recipe</DialogTitle>
-                          </DialogHeader>
-                          <div className="max-h-80 overflow-y-auto space-y-1">
-                            {recipes.length === 0 ? (
-                              <div className="text-sm text-muted-foreground">
-                                You don't have any recipes yet.
+                    <ul>
+                      {convs.map((c) => {
+                        const oid = c.user_a === user.id ? c.user_b : c.user_a;
+                        const p = profiles[oid];
+                        const pending =
+                          c.status === "pending" && c.initiator_id !== user.id;
+                        const u = unread[c.id] ?? 0;
+                        return (
+                          <li key={c.id}>
+                            <button
+                              onClick={() => setActiveId(c.id)}
+                              className={`w-full text-left px-3 py-2 flex items-center gap-3 hover:bg-secondary/50 ${
+                                activeId === c.id ? "bg-secondary" : ""
+                              }`}
+                            >
+                              <Avatar className="h-9 w-9">
+                                {p?.avatar_url ? (
+                                  <AvatarImage src={p.avatar_url} />
+                                ) : p?.avatar_icon ? (
+                                  <ChefAvatar
+                                    icon={p.avatar_icon}
+                                    className="h-9 w-9"
+                                  />
+                                ) : (
+                                  <AvatarFallback>
+                                    {nameOf(p)[0]?.toUpperCase()}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium truncate">
+                                  {nameOf(p)}
+                                </div>
+                                <div className="text-xs text-muted-foreground truncate">
+                                  {pending
+                                    ? "Wants to message you"
+                                    : new Date(c.last_message_at).toLocaleString()}
+                                </div>
                               </div>
-                            ) : (
-                              recipes.map((r) => (
-                                <button
-                                  key={r.id}
-                                  onClick={async () => {
-                                    await send(r.id);
-                                    setShareOpen(false);
-                                  }}
-                                  className="w-full text-left px-3 py-2 rounded-md hover:bg-secondary"
-                                >
-                                  <div className="font-medium text-sm">{r.name}</div>
-                                  {r.category && (
-                                    <div className="text-xs text-muted-foreground">{r.category}</div>
-                                  )}
-                                </button>
-                              ))
-                            )}
+                              {u > 0 && (
+                                <span className="ml-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular-nums">
+                                  {u > 99 ? "99+" : u}
+                                </span>
+                              )}
+                              {pending && !u && (
+                                <span className="h-2 w-2 rounded-full bg-primary" />
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </ScrollArea>
+              </div>
+
+              {/* Chat area */}
+              <div
+                className={`border border-border rounded-lg bg-card flex flex-col ${
+                  showSidebar ? "hidden md:flex" : "flex"
+                }`}
+              >
+                {!active ? (
+                  <div className="flex-1 grid place-items-center text-muted-foreground">
+                    Select a conversation
+                  </div>
+                ) : (
+                  <>
+                    <div className="p-3 border-b border-border flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="md:hidden -ml-1"
+                          onClick={() => setActiveId(null)}
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <Avatar className="h-9 w-9">
+                          {otherProfile?.avatar_url ? (
+                            <AvatarImage src={otherProfile.avatar_url} />
+                          ) : otherProfile?.avatar_icon ? (
+                            <ChefAvatar
+                              icon={otherProfile.avatar_icon}
+                              className="h-9 w-9"
+                            />
+                          ) : (
+                            <AvatarFallback>
+                              {nameOf(otherProfile)[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">
+                            {nameOf(otherProfile)}
                           </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            send();
-                          }
-                        }}
-                        placeholder="Type a message…"
-                      />
-                      <Button onClick={() => send()} size="icon">
-                        <Send className="h-4 w-4" />
+                          <div className="text-xs text-muted-foreground h-4">
+                            {otherTyping
+                              ? "typing…"
+                              : theyBlockedMe
+                                ? "This user has blocked you"
+                                : ""}
+                          </div>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={toggleBlock}>
+                        {iBlockedThem ? (
+                          <>
+                            <ShieldOff className="h-4 w-4 mr-1" /> Unblock
+                          </>
+                        ) : (
+                          <>
+                            <Ban className="h-4 w-4 mr-1" /> Block
+                          </>
+                        )}
                       </Button>
                     </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+
+                    {isPendingForMe && (
+                      <div className="p-3 border-b border-border bg-muted/40 flex items-center justify-between gap-2">
+                        <div className="text-sm">
+                          <strong>{nameOf(otherProfile)}</strong> wants to send you
+                          a message.
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => respond("declined")}
+                          >
+                            <X className="h-4 w-4 mr-1" /> Decline
+                          </Button>
+                          <Button size="sm" onClick={() => respond("accepted")}>
+                            <Check className="h-4 w-4 mr-1" /> Accept
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div
+                      ref={scrollRef}
+                      className="flex-1 overflow-y-auto p-4 space-y-3"
+                    >
+                      {messages.length === 0 ? (
+                        <div className="grid place-items-center py-12 text-center">
+                          <div className="max-w-sm">
+                            <div className="font-medium mb-1">No messages yet</div>
+                            <p className="text-sm text-muted-foreground">
+                              Say hi to{" "}
+                              <strong>{nameOf(otherProfile)}</strong>.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        messages.map((m) => {
+                          const cm = toChatMessage(m);
+                          const mine = m.sender_id === user.id;
+                          const replyParent = m.reply_to_id
+                            ? (messagesById[m.reply_to_id] ?? null)
+                            : null;
+                          const replyParentProfile = replyParent
+                            ? replyParent.sender_id === user.id
+                              ? null
+                              : profiles[replyParent.sender_id]
+                            : null;
+                          return (
+                            <ChatBubble
+                              key={m.id}
+                              msg={cm}
+                              mine={mine}
+                              scope="dm"
+                              meId={user.id}
+                              profile={mine ? null : otherProfile}
+                              replyParent={replyParent}
+                              replyParentProfile={replyParentProfile}
+                              onReply={setReplyTo}
+                              onEdit={editMessage}
+                              onDelete={deleteMessage}
+                              onJumpToReply={jumpToMessage}
+                              bubbleRef={(el) => {
+                                messageRefs.current[m.id] = el;
+                              }}
+                            />
+                          );
+                        })
+                      )}
+                      {otherTyping && (
+                        <div className="text-xs text-muted-foreground italic px-1">
+                          {nameOf(otherProfile)} is typing…
+                        </div>
+                      )}
+                    </div>
+
+                    <ChatComposer
+                      value={input}
+                      onChange={setInput}
+                      onSend={() => send()}
+                      onTyping={notifyTyping}
+                      disabled={!canSend}
+                      disabledMessage={
+                        iBlockedThem
+                          ? "You have blocked this user."
+                          : theyBlockedMe
+                            ? "You can't message this user."
+                            : "Waiting for the other user to accept your request…"
+                      }
+                      replyTo={replyTo}
+                      replyToProfile={
+                        replyTo
+                          ? replyTo.sender_id === user.id
+                            ? null
+                            : otherProfile
+                          : null
+                      }
+                      onCancelReply={() => setReplyTo(null)}
+                      onShareRecipe={onShareRecipe}
+                      onShareIngredient={onShareIngredient}
+                    />
+                  </>
+                )}
+              </div>
+            </div>
           </TabsContent>
           <TabsContent value="groups" className="mt-4">
             <GroupsPanel />
@@ -569,7 +733,12 @@ function MessagesPage() {
 }
 
 // ============= GROUPS PANEL =============
-type GroupRow = { id: string; name: string; description: string | null; updated_at: string };
+type GroupRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  updated_at: string;
+};
 
 function GroupsPanel() {
   const { user } = useAuth();
@@ -581,38 +750,78 @@ function GroupsPanel() {
 
   const load = async () => {
     if (!user) return;
-    const { data: mems } = await supabase.from("group_members").select("group_id").eq("user_id", user.id);
+    const { data: mems } = await supabase
+      .from("group_members")
+      .select("group_id")
+      .eq("user_id", user.id);
     const ids = (mems ?? []).map((m) => m.group_id);
-    if (ids.length === 0) { setGroups([]); return; }
-    const { data } = await supabase.from("groups").select("id,name,description,updated_at").in("id", ids).order("updated_at", { ascending: false });
+    if (ids.length === 0) {
+      setGroups([]);
+      return;
+    }
+    const { data } = await supabase
+      .from("groups")
+      .select("id,name,description,updated_at")
+      .in("id", ids)
+      .order("updated_at", { ascending: false });
     setGroups((data ?? []) as GroupRow[]);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user]);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const create = async () => {
     if (!user || !name.trim()) return;
-    const { data, error } = await supabase.from("groups").insert({
-      name: name.trim(), description: desc.trim() || null, owner_id: user.id,
-    }).select("id").single();
+    const { data, error } = await supabase
+      .from("groups")
+      .insert({
+        name: name.trim(),
+        description: desc.trim() || null,
+        owner_id: user.id,
+      })
+      .select("id")
+      .single();
     if (error) return toast.error(error.message);
     toast.success("Group created");
-    setOpen(false); setName(""); setDesc("");
+    setOpen(false);
+    setName("");
+    setDesc("");
     nav({ to: "/groups/$id", params: { id: data.id } });
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Your groups</h2>
+        <h2 className="font-semibold flex items-center gap-2">
+          <Users className="h-5 w-5 text-primary" /> Your groups
+        </h2>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="h-4 w-4 mr-1" /> New group</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-1" /> New group
+            </Button>
+          </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Create a group</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Create a group</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Group name" />
-              <Textarea value={desc} onChange={(e) => setDesc(e.target.value)} placeholder="Description (optional)" rows={3} />
-              <Button onClick={create} className="w-full">Create</Button>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Group name"
+              />
+              <Textarea
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+                placeholder="Description (optional)"
+                rows={3}
+              />
+              <Button onClick={create} className="w-full">
+                Create
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -624,9 +833,18 @@ function GroupsPanel() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {groups.map((g) => (
-            <Link key={g.id} to="/groups/$id" params={{ id: g.id }} className="block rounded-xl border border-border bg-card p-4 hover:bg-secondary/50 transition-colors">
+            <Link
+              key={g.id}
+              to="/groups/$id"
+              params={{ id: g.id }}
+              className="block rounded-xl border border-border bg-card p-4 hover:bg-secondary/50 transition-colors"
+            >
               <div className="font-semibold">{g.name}</div>
-              {g.description && <div className="text-sm text-muted-foreground line-clamp-2 mt-1">{g.description}</div>}
+              {g.description && (
+                <div className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  {g.description}
+                </div>
+              )}
             </Link>
           ))}
         </div>
